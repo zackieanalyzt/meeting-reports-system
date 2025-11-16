@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import MeetingList from './components/MeetingList';
+import UploadForm from './components/UploadForm';
 import { getMeetings, healthCheck } from './services/api';
 
 function App() {
@@ -8,6 +9,7 @@ function App() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [dbStatus, setDbStatus] = useState({ status: 'checking', database: 'unknown' });
+  const [showUploadForm, setShowUploadForm] = useState(false);
 
   // Health check
   useEffect(() => {
@@ -57,6 +59,11 @@ function App() {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+  };
+
+  const handleUploadSuccess = () => {
+    setShowUploadForm(false);
+    loadMeetings(''); // Reload meetings
   };
 
   return (
@@ -116,6 +123,23 @@ function App() {
           <p>© 2024 ระบบรายงานการประชุม | พัฒนาด้วย React + Node.js</p>
         </div>
       </footer>
+
+      {/* Upload Button */}
+      <button
+        className="upload-button"
+        onClick={() => setShowUploadForm(true)}
+        title="อัพโหลดรายงานการประชุม"
+      >
+        ➕
+      </button>
+
+      {/* Upload Form Modal */}
+      {showUploadForm && (
+        <UploadForm
+          onSuccess={handleUploadSuccess}
+          onCancel={() => setShowUploadForm(false)}
+        />
+      )}
     </div>
   );
 }

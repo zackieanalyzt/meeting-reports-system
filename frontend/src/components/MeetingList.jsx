@@ -64,10 +64,16 @@ function MeetingList({ meetings, loading, searchTerm }) {
             </div>
 
             <div className="meeting-actions">
-              <button className="download-button">
+              <a
+                href={meeting.file_path}
+                download
+                className="download-button"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <span className="button-icon">⬇️</span>
                 <span>ดาวน์โหลดรายงาน</span>
-              </button>
+              </a>
             </div>
           </div>
         ))}
