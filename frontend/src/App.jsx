@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import MeetingList from './components/MeetingList';
 import UploadForm from './components/UploadForm';
+import AgendaList from './components/AgendaList';
+import AgendaForm from './components/AgendaForm';
 import { getMeetings, healthCheck } from './services/api';
 
 function App() {
@@ -10,6 +12,8 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dbStatus, setDbStatus] = useState({ status: 'checking', database: 'unknown' });
   const [showUploadForm, setShowUploadForm] = useState(false);
+  const [showAgendaForm, setShowAgendaForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('reports'); // 'reports' or 'agendas'
 
   // Health check
   useEffect(() => {
@@ -66,11 +70,16 @@ function App() {
     loadMeetings(''); // Reload meetings
   };
 
+  const handleAgendaSuccess = () => {
+    setShowAgendaForm(false);
+    // Reload agendas if needed
+  };
+
   return (
     <div className="app">
       <header className="header">
         <div className="container">
-          <h1 className="title">📋 ระบบรายงานการประชุม</h1>
+          <h1 className="title">📋 ระบบจัดการการประชุม</h1>
           <div className="status-bar">
             <span className={`status-badge ${dbStatus.status === 'ok' ? 'status-ok' : 'status-error'}`}>
               {dbStatus.status === 'ok' ? '🟢 เชื่อมต่อฐานข้อมูลสำเร็จ' : '🔴 ไม่สามารถเชื่อมต่อฐานข้อมูล'}
@@ -79,15 +88,42 @@ function App() {
         </div>
       </header>
 
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <div className="container">
+          <div className="tab-buttons">
+            <button
+              className={`tab-button ${activeTab === 'reports' ? 'active' : ''}`}
+              onClick={() => setActiveTab('reports')}
+            >
+              <span className="tab-icon">📋</span>
+              <span>รายงานการประชุม</span>
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'agendas' ? 'active' : ''}`}
+              onClick={() => setActiveTab('agendas')}
+            >
+              <span className="tab-icon">📑</span>
+              <span>วาระการประชุม</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <main className="main">
         <div className="container">
+          {/* Search Section */}
           <div className="search-section">
             <div className="search-box">
               <span className="search-icon">🔍</span>
               <input
                 type="text"
                 className="search-input"
-                placeholder="ค้นหาจากชื่อการประชุม, เลขที่, หรือสถานที่..."
+                placeholder={
+                  activeTab === 'reports'
+                    ? "ค้นหาจากชื่อการประชุม, เลขที่, หรือสถานที่..."
+                    : "ค้นหาจากชื่อวาระ, เลขที่ประชุม, หรือกลุ่มงาน..."
+                }
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
@@ -110,34 +146,60 @@ function App() {
             </div>
           )}
 
-          <MeetingList 
-            meetings={meetings} 
-            loading={loading}
-            searchTerm={searchTerm}
-          />
+          {/* Content based on active tab */}
+          {activeTab === 'reports' && (
+            <MeetingList 
+              meetings={meetings} 
+              loading={loading}
+              searchTerm={searchTerm}
+            />
+          )}
+
+          {activeTab === 'agendas' && (
+            <AgendaList searchTerm={searchTerm} />
+          )}
         </div>
       </main>
 
       <footer className="footer">
         <div className="container">
-          <p>© 2024 ระบบรายงานการประชุม | พัฒนาด้วย React + Node.js</p>
+          <p>© 2024 ระบบจัดการการประชุม | พัฒนาด้วย React + Node.js</p>
         </div>
       </footer>
 
-      {/* Upload Button */}
-      <button
-        className="upload-button"
-        onClick={() => setShowUploadForm(true)}
-        title="อัพโหลดรายงานการประชุม"
-      >
-        ➕
-      </button>
+      {/* Upload Buttons */}
+      {activeTab === 'reports' && (
+        <button
+          className="upload-button"
+          onClick={() => setShowUploadForm(true)}
+          title="อัพโหลดรายงานการประชุม"
+        >
+          ➕
+        </button>
+      )}
 
-      {/* Upload Form Modal */}
+      {activeTab === 'agendas' && (
+        <button
+          className="upload-button agenda-upload-button"
+          onClick={() => setShowAgendaForm(true)}
+          title="เพิ่มวาระการประชุม"
+        >
+          ➕
+        </button>
+      )}
+
+      {/* Upload Form Modals */}
       {showUploadForm && (
         <UploadForm
           onSuccess={handleUploadSuccess}
           onCancel={() => setShowUploadForm(false)}
+        />
+      )}
+
+      {showAgendaForm && (
+        <AgendaForm
+          onSuccess={handleAgendaSuccess}
+          onCancel={() => setShowAgendaForm(false)}
         />
       )}
     </div>

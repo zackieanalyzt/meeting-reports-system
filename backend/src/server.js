@@ -384,3 +384,205 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+
+
+// ========================================
+// Agenda Management Endpoints
+// ========================================
+
+// Get all agendas with filters
+app.get('/api/agendas', async (req, res) => {
+  try {
+    const { meeting_number, department, type } = req.query;
+    let query = 'SELECT * FROM meeting_agendas';
+    let params = [];
+    let conditions = [];
+
+    if (meeting_number) {
+      conditions.push('meeting_number = $' + (params.length + 1));
+      params.push(meeting_number);
+    }
+
+    if (department) {
+      conditions.push('submitting_department = $' + (params.length + 1));
+      params.push(department);
+    }
+
+    if (type) {
+      conditions.push('agenda_type = $' + (params.length + 1));
+      params.push(type);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY meeting_number DESC, agenda_number';
+
+    const result = await db.query(query, params);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (error) {
+    console.error('Error fetching agendas:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+});
+
+// Get agenda by ID
+app.get('/api/agendas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.query('SELECT * FROM meeting_agendas WHERE id = $1', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Agenda not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error fetching agenda:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch agenda',
+      message: error.message
+    });
+  }
+});
+
+// Create agenda
+app.post('/api/agendas', async (req, res) => {
+  try {
+    const {
+      meeting_number,
+      agenda_number,
+      agenda_topic,
+      agenda_type,
+      submitting_department,
+      description,
+      file_path,
+      file_size
+    } = req.body;
+
+    // Validate required fields
+    if (!meeting_number || !agenda_number || !agenda_topic || !agenda_type || !submitting_department) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    const result = await db.query(
+      `INSERT INTO meeting_agendas 
+       (meeting_number, agenda_number, agenda_topic, agenda_type, submitting_department, description, file_path, file_size)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [meeting_number, agenda_number, agenda_topic, agenda_type, submitting_department, description, file_path, file_size]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Agenda created successfully',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error creating agenda:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create agenda',
+      message: error.message
+    });
+  }
+});
+
+// Update agenda
+app.put('/api/agendas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      meeting_number,
+      agenda_number,
+      agenda_topic,
+      agenda_type,
+      submitting_department,
+      description,
+      file_path,
+      file_size
+    } = req.body;
+
+    const result = await db.query(
+      `UPDATE meeting_agendas 
+       SET meeting_number = $1, agenda_number = $2, agenda_topic = $3, 
+           agenda_type = $4, submitting_department = $5, description = $6,
+           file_path = $7, file_size = $8, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $9
+       RETURNING *`,
+      [meeting_number, agenda_number, agenda_topic, agenda_type, submitting_department, description, file_path, file_size, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Agenda not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Agenda updated successfully',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error updating agenda:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update agenda',
+      message: error.message
+    });
+  }
+});
+
+// Delete agenda
+app.delete('/api/agendas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      'DELETE FROM meeting_agendas WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Agenda not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Agenda deleted successfully',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error deleting agenda:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete agenda',
+      message: error.message
+    });
+  }
+});

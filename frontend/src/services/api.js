@@ -100,3 +100,54 @@ export const detailedHealthCheck = async () => {
     throw error;
   }
 };
+
+// Agenda APIs
+export const getAgendas = async (filters = {}) => {
+  try {
+    const response = await api.get('/agendas', { params: filters });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching agendas:', error);
+    throw error;
+  }
+};
+
+export const getAgendaById = async (id) => {
+  try {
+    const response = await api.get(`/agendas/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching agenda:', error);
+    throw error;
+  }
+};
+
+export const createAgenda = async (agendaData) => {
+  try {
+    const response = await api.post('/agendas', agendaData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating agenda:', error);
+    throw error;
+  }
+};
+
+export const updateAgenda = async (id, agendaData) => {
+  try {
+    const response = await api.put(`/agendas/${id}`, agendaData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating agenda:', error);
+    throw error;
+  }
+};
+
+export const deleteAgenda = async (id) => {
+  try {
+    const response = await api.delete(`/agendas/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting agenda:', error);
+    throw error;
+  }
+};
