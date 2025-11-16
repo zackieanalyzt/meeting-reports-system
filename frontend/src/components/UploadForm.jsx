@@ -1,25 +1,26 @@
-import { useState } from 'react';
-import { createMeeting, uploadFile } from '../services/api';
+import { useState, useEffect } from 'react';
+import { getMeetings, uploadMeetingReport } from '../services/api';
 
 function UploadForm({ onSuccess, onCancel }) {
-  const [formData, setFormData] = useState({
-    meeting_number: '',
-    meeting_title: '',
-    meeting_date: '',
-    meeting_time: '',
-    location: 'ห้องประชุมดอกปีบ สำนักงานสาธารณสุขจังหวัดลำพูน',
-    department: 'สำนักงานสาธารณสุขจังหวัดลำพูน'
-  });
+  const [selectedMeetingId, setSelectedMeetingId] = useState('');
+  const [meetings, setMeetings] = useState([]);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  useEffect(() => {
+    loadMeetings();
+  }, []);
+
+  const loadMeetings = async () => {
+    try {
+      const response = await getMeetings();
+      // Filter meetings without reports
+      const meetingsWithoutReports = (response.data || []).filter(m => !m.file_size || m.file_size === 0);
+      setMeetings(meetingsWithoutReports);
+    } catch (err) {
+      console.error('Failed to load meetings:', err);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -45,40 +46,38 @@ function UploadForm({ onSuccess, onCancel }) {
 
     try {
       // Validate
+      if (!selectedMeetingId) {
+        throw new Error('กรุณาเลือกการประชุม');
+      }
       if (!file) {
         throw new Error('กรุณาเลือกไฟล์ PDF');
       }
 
-      // Upload file first
-      const uploadResult = await uploadFile(file);
+      // Upload report to existing meeting
+      const result = await uploadMeetingReport(selectedMeetingId, file);
 
-      if (uploadResult.success) {
-        // Create meeting record
-        const meetingData = {
-          ...formData,
-          file_path: uploadResult.filePath,
-          file_size: uploadResult.fileSize
-        };
-
-        const meetingResult = await createMeeting(meetingData);
-
-        if (meetingResult.success) {
-          alert('✅ บันทึกข้อมูลสำเร็จ');
-          if (onSuccess) onSuccess();
-        }
+      if (result.success) {
+        alert('✅ อัพโหลดรายงานสำเร็จ');
+        if (onSuccess) onSuccess();
       }
     } catch (err) {
-      setError(err.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+      setError(err.message || 'เกิดข้อผิดพลาดในการอัพโหลดรายงาน');
       console.error('Upload failed:', err);
     } finally {
       setUploading(false);
     }
   };
 
+  const selectedMeeting = meetings.find(m => m.id === parseInt(selectedMeetingId));
+
   return (
     <div className="upload-form-container">
       <div className="upload-form-card">
         <h2 className="upload-form-title">📤 อัพโหลดรายงานการประชุม</h2>
+
+        <div className="info-box">
+          <p>📌 <strong>หมายเหตุ:</strong> อัพโหลดรายงานให้กับการประชุมที่สร้างไว้แล้ว</p>
+        </div>
 
         {error && (
           <div className="error-message">
@@ -87,84 +86,50 @@ function UploadForm({ onSuccess, onCancel }) {
           </div>
         )}
 
+        {meetings.length === 0 && (
+          <div className="warning-message">
+            <span className="warning-icon">⚠️</span>
+            <span>ไม่มีการประชุมที่ยังไม่มีรายงาน กรุณาสร้างการประชุมใหม่ก่อน</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="upload-form">
           <div className="form-group">
-            <label htmlFor="meeting_number">เลขที่การประชุม *</label>
-            <input
-              type="text"
-              id="meeting_number"
-              name="meeting_number"
-              value={formData.meeting_number}
-              onChange={handleChange}
-              placeholder="เช่น 1/2568"
+            <label htmlFor="meeting_id">เลือกการประชุม *</label>
+            <select
+              id="meeting_id"
+              value={selectedMeetingId}
+              onChange={(e) => setSelectedMeetingId(e.target.value)}
               required
-            />
+              disabled={meetings.length === 0}
+            >
+              <option value="">-- เลือกการประชุมที่ต้องการอัพโหลดรายงาน --</option>
+              {meetings.map(meeting => (
+                <option key={meeting.id} value={meeting.id}>
+                  {meeting.meeting_number} - {meeting.meeting_title}
+                </option>
+              ))}
+            </select>
+            {meetings.length === 0 && (
+              <small style={{ color: '#ef4444' }}>
+                ไม่มีการประชุมที่ยังไม่มีรายงาน
+              </small>
+            )}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="meeting_title">ชื่อการประชุม *</label>
-            <textarea
-              id="meeting_title"
-              name="meeting_title"
-              value={formData.meeting_title}
-              onChange={handleChange}
-              placeholder="ระบุชื่อการประชุมแบบเต็ม"
-              rows="3"
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="meeting_date">วันที่ประชุม *</label>
-              <input
-                type="date"
-                id="meeting_date"
-                name="meeting_date"
-                value={formData.meeting_date}
-                onChange={handleChange}
-                required
-              />
+          {selectedMeeting && (
+            <div className="selected-meeting-info">
+              <h4>ข้อมูลการประชุมที่เลือก:</h4>
+              <div className="info-grid">
+                <div><strong>เลขที่:</strong> {selectedMeeting.meeting_number}</div>
+                <div><strong>วันที่:</strong> {selectedMeeting.meeting_date_thai || new Date(selectedMeeting.meeting_date).toLocaleDateString('th-TH')}</div>
+                <div><strong>สถานที่:</strong> {selectedMeeting.location}</div>
+              </div>
             </div>
-
-            <div className="form-group">
-              <label htmlFor="meeting_time">เวลา</label>
-              <input
-                type="time"
-                id="meeting_time"
-                name="meeting_time"
-                value={formData.meeting_time}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
+          )}
 
           <div className="form-group">
-            <label htmlFor="location">สถานที่</label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="สถานที่จัดการประชุม"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="department">หน่วยงาน</label>
-            <input
-              type="text"
-              id="department"
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-              placeholder="ชื่อหน่วยงาน"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="pdfFile">ไฟล์ PDF *</label>
+            <label htmlFor="pdfFile">ไฟล์รายงาน PDF *</label>
             <div className="file-input-wrapper">
               <input
                 type="file"
@@ -172,6 +137,7 @@ function UploadForm({ onSuccess, onCancel }) {
                 accept=".pdf"
                 onChange={handleFileChange}
                 required
+                disabled={!selectedMeetingId}
               />
               {file && (
                 <div className="file-info">
@@ -197,9 +163,9 @@ function UploadForm({ onSuccess, onCancel }) {
             <button
               type="submit"
               className="btn-submit"
-              disabled={uploading}
+              disabled={uploading || meetings.length === 0}
             >
-              {uploading ? '⏳ กำลังบันทึก...' : '💾 บันทึกข้อมูล'}
+              {uploading ? '⏳ กำลังอัพโหลด...' : '📤 อัพโหลดรายงาน'}
             </button>
           </div>
         </form>

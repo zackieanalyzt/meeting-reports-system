@@ -42,6 +42,39 @@ export const createMeeting = async (meetingData) => {
   }
 };
 
+export const createMeetingOnly = async (meetingData) => {
+  try {
+    const response = await api.post('/meetings/create', meetingData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating meeting:', error);
+    throw error;
+  }
+};
+
+export const uploadMeetingReport = async (meetingId, file) => {
+  try {
+    const formData = new FormData();
+    formData.append('pdfFile', file);
+
+    const response = await axios.put(
+      `${API_URL}/meetings/${meetingId}/report`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 30000,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading report:', error);
+    throw error;
+  }
+};
+
 export const updateMeeting = async (id, meetingData) => {
   try {
     const response = await api.put(`/meetings/${id}`, meetingData);
@@ -148,6 +181,27 @@ export const deleteAgenda = async (id) => {
     return response.data;
   } catch (error) {
     console.error('Error deleting agenda:', error);
+    throw error;
+  }
+};
+
+// Report Status APIs
+export const getMeetingsWithReports = async () => {
+  try {
+    const response = await api.get('/meetings/with-reports');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching meetings with reports:', error);
+    throw error;
+  }
+};
+
+export const getMeetingsWithoutReports = async () => {
+  try {
+    const response = await api.get('/meetings/without-reports');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching meetings without reports:', error);
     throw error;
   }
 };

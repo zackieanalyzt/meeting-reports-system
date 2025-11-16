@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import MeetingList from './components/MeetingList';
+import MeetingListView from './components/MeetingListView';
+import MeetingForm from './components/MeetingForm';
 import UploadForm from './components/UploadForm';
 import AgendaList from './components/AgendaList';
 import AgendaForm from './components/AgendaForm';
+import ReportStatus from './components/ReportStatus';
 import { getMeetings, healthCheck } from './services/api';
 
 function App() {
@@ -11,9 +13,10 @@ function App() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [dbStatus, setDbStatus] = useState({ status: 'checking', database: 'unknown' });
+  const [showMeetingForm, setShowMeetingForm] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showAgendaForm, setShowAgendaForm] = useState(false);
-  const [activeTab, setActiveTab] = useState('reports'); // 'reports' or 'agendas'
+  const [activeTab, setActiveTab] = useState('meetings'); // 'meetings', 'agendas', 'reports'
 
   // Health check
   useEffect(() => {
@@ -65,6 +68,11 @@ function App() {
     setSearchTerm(e.target.value);
   };
 
+  const handleMeetingSuccess = () => {
+    setShowMeetingForm(false);
+    loadMeetings(''); // Reload meetings
+  };
+
   const handleUploadSuccess = () => {
     setShowUploadForm(false);
     loadMeetings(''); // Reload meetings
@@ -73,6 +81,19 @@ function App() {
   const handleAgendaSuccess = () => {
     setShowAgendaForm(false);
     // Reload agendas if needed
+  };
+
+  const getPlaceholder = () => {
+    switch (activeTab) {
+      case 'meetings':
+        return "ค้นหาจากชื่อการประชุม, เลขที่, หรือสถานที่...";
+      case 'agendas':
+        return "ค้นหาจากชื่อวาระ, เลขที่ประชุม, หรือกลุ่มงาน...";
+      case 'reports':
+        return "ค้นหาจากชื่อการประชุม, เลขที่, หรือสถานที่...";
+      default:
+        return "ค้นหา...";
+    }
   };
 
   return (
@@ -93,11 +114,11 @@ function App() {
         <div className="container">
           <div className="tab-buttons">
             <button
-              className={`tab-button ${activeTab === 'reports' ? 'active' : ''}`}
-              onClick={() => setActiveTab('reports')}
+              className={`tab-button ${activeTab === 'meetings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('meetings')}
             >
-              <span className="tab-icon">📋</span>
-              <span>รายงานการประชุม</span>
+              <span className="tab-icon">📅</span>
+              <span>การประชุม</span>
             </button>
             <button
               className={`tab-button ${activeTab === 'agendas' ? 'active' : ''}`}
@@ -105,6 +126,13 @@ function App() {
             >
               <span className="tab-icon">📑</span>
               <span>วาระการประชุม</span>
+            </button>
+            <button
+              className={`tab-button ${activeTab === 'reports' ? 'active' : ''}`}
+              onClick={() => setActiveTab('reports')}
+            >
+              <span className="tab-icon">📋</span>
+              <span>รายงานการประชุม</span>
             </button>
           </div>
         </div>
@@ -119,11 +147,7 @@ function App() {
               <input
                 type="text"
                 className="search-input"
-                placeholder={
-                  activeTab === 'reports'
-                    ? "ค้นหาจากชื่อการประชุม, เลขที่, หรือสถานที่..."
-                    : "ค้นหาจากชื่อวาระ, เลขที่ประชุม, หรือกลุ่มงาน..."
-                }
+                placeholder={getPlaceholder()}
                 value={searchTerm}
                 onChange={handleSearchChange}
               />
@@ -147,16 +171,24 @@ function App() {
           )}
 
           {/* Content based on active tab */}
-          {activeTab === 'reports' && (
-            <MeetingList 
-              meetings={meetings} 
-              loading={loading}
-              searchTerm={searchTerm}
-            />
+          {activeTab === 'meetings' && (
+            <MeetingListView searchTerm={searchTerm} />
           )}
 
           {activeTab === 'agendas' && (
             <AgendaList searchTerm={searchTerm} />
+          )}
+
+          {activeTab === 'reports' && (
+            <div className="reports-tab">
+              <div className="tab-header">
+                <h2>📋 รายงานการประชุม</h2>
+                <p className="tab-description">
+                  จัดการรายงานการประชุมหลังการประชุมเสร็จสิ้น
+                </p>
+              </div>
+              <ReportStatus />
+            </div>
           )}
         </div>
       </main>
@@ -168,11 +200,11 @@ function App() {
       </footer>
 
       {/* Upload Buttons */}
-      {activeTab === 'reports' && (
+      {activeTab === 'meetings' && (
         <button
           className="upload-button"
-          onClick={() => setShowUploadForm(true)}
-          title="อัพโหลดรายงานการประชุม"
+          onClick={() => setShowMeetingForm(true)}
+          title="สร้างการประชุมใหม่"
         >
           ➕
         </button>
@@ -188,11 +220,21 @@ function App() {
         </button>
       )}
 
-      {/* Upload Form Modals */}
-      {showUploadForm && (
-        <UploadForm
-          onSuccess={handleUploadSuccess}
-          onCancel={() => setShowUploadForm(false)}
+      {activeTab === 'reports' && (
+        <button
+          className="upload-button"
+          onClick={() => setShowUploadForm(true)}
+          title="อัพโหลดรายงานการประชุม"
+        >
+          ➕
+        </button>
+      )}
+
+      {/* Form Modals */}
+      {showMeetingForm && (
+        <MeetingForm
+          onSuccess={handleMeetingSuccess}
+          onCancel={() => setShowMeetingForm(false)}
         />
       )}
 
@@ -200,6 +242,13 @@ function App() {
         <AgendaForm
           onSuccess={handleAgendaSuccess}
           onCancel={() => setShowAgendaForm(false)}
+        />
+      )}
+
+      {showUploadForm && (
+        <UploadForm
+          onSuccess={handleUploadSuccess}
+          onCancel={() => setShowUploadForm(false)}
         />
       )}
     </div>

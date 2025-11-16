@@ -586,3 +586,220 @@ app.delete('/api/agendas/:id', async (req, res) => {
     });
   }
 });
+
+
+// ========================================
+// Meeting Management (Separated from Report Upload)
+// ========================================
+
+// Create meeting without report
+app.post('/api/meetings/create', async (req, res) => {
+  try {
+    const {
+      meeting_number,
+      meeting_title,
+      meeting_date,
+      meeting_time,
+      location,
+      department
+    } = req.body;
+
+    // Validate required fields
+    if (!meeting_number || !meeting_title || !meeting_date) {
+      return res.status(400).json({
+        success: false,
+        message: 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน'
+      });
+    }
+
+    // Check if meeting_number already exists
+    const existing = await db.query(
+      'SELECT id FROM meeting_reports WHERE meeting_number = $1',
+      [meeting_number]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'เลขที่การประชุมนี้มีอยู่แล้ว'
+      });
+    }
+
+    // Create meeting without file
+    const result = await db.query(
+      `INSERT INTO meeting_reports 
+       (meeting_number, meeting_title, meeting_date, meeting_time, location, department, file_path, file_size)
+       VALUES ($1, $2, $3, $4, $5, $6, '', 0)
+       RETURNING *`,
+      [meeting_number, meeting_title, meeting_date, meeting_time, location, department]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'สร้างการประชุมสำเร็จ',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error creating meeting:', error);
+    res.status(500).json({
+      success: false,
+      message: 'สร้างการประชุมไม่สำเร็จ',
+      error: error.message
+    });
+  }
+});
+
+// Upload report to existing meeting
+app.put('/api/meetings/:id/report', upload.single('pdfFile'), async (req, res) => {
+  try {
+    const meetingId = req.params.id;
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'ไม่พบไฟล์ที่อัพโหลด'
+      });
+    }
+
+    // Update meeting with report file
+    const result = await db.query(
+      `UPDATE meeting_reports 
+       SET file_path = $1, file_size = $2, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = $3 
+       RETURNING *`,
+      [`/uploads/${req.file.filename}`, req.file.size, meetingId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบการประชุมที่ระบุ'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'อัพโหลดรายงานสำเร็จ',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error uploading report:', error);
+    res.status(500).json({
+      success: false,
+      message: 'อัพโหลดรายงานไม่สำเร็จ',
+      error: error.message
+    });
+  }
+});
+
+// Get meetings with agenda count
+app.get('/api/meetings/with-stats', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        m.*,
+        (SELECT COUNT(*) FROM meeting_agendas WHERE meeting_number = m.meeting_number) as agenda_count,
+        (CASE WHEN m.file_size > 0 THEN true ELSE false END) as has_report
+      FROM meeting_reports m
+      ORDER BY m.meeting_date DESC
+    `;
+
+    const result = await db.query(query);
+
+    // Format the data
+    const meetings = result.rows.map(meeting => ({
+      ...meeting,
+      meeting_date_thai: formatThaiDate(meeting.meeting_date),
+      file_size_formatted: formatFileSize(meeting.file_size)
+    }));
+
+    res.json({
+      success: true,
+      data: meetings,
+      count: meetings.length
+    });
+  } catch (error) {
+    console.error('Error fetching meetings with stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+});
+
+
+// ========================================
+// Report Status Endpoints
+// ========================================
+
+// Get meetings with reports
+app.get('/api/meetings/with-reports', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        m.*,
+        (SELECT COUNT(*) FROM meeting_agendas WHERE meeting_number = m.meeting_number) as agenda_count
+      FROM meeting_reports m 
+      WHERE m.file_size > 0 
+      ORDER BY m.meeting_date DESC
+    `;
+
+    const result = await db.query(query);
+
+    // Format the data
+    const meetings = result.rows.map(meeting => ({
+      ...meeting,
+      meeting_date_thai: formatThaiDate(meeting.meeting_date),
+      file_size_formatted: formatFileSize(meeting.file_size)
+    }));
+
+    res.json({
+      success: true,
+      data: meetings,
+      count: meetings.length
+    });
+  } catch (error) {
+    console.error('Error fetching meetings with reports:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
+
+// Get meetings without reports
+app.get('/api/meetings/without-reports', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        m.*,
+        (SELECT COUNT(*) FROM meeting_agendas WHERE meeting_number = m.meeting_number) as agenda_count
+      FROM meeting_reports m 
+      WHERE m.file_size = 0 OR m.file_size IS NULL
+      ORDER BY m.meeting_date DESC
+    `;
+
+    const result = await db.query(query);
+
+    // Format the data
+    const meetings = result.rows.map(meeting => ({
+      ...meeting,
+      meeting_date_thai: formatThaiDate(meeting.meeting_date)
+    }));
+
+    res.json({
+      success: true,
+      data: meetings,
+      count: meetings.length
+    });
+  } catch (error) {
+    console.error('Error fetching meetings without reports:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+});
