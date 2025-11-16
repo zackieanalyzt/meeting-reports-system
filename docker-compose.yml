@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: meeting-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=192.168.100.70
+      - DB_PORT=5432
+      - DB_NAME=meeting_mgmt
+      - DB_USER=postgres
+      - DB_PASS=grespost
+      - PORT=3001
+      - NODE_ENV=production
+    networks:
+      - meeting-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: meeting-frontend
+    ports:
+      - "8080:8080"
+    networks:
+      - meeting-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  meeting-network:
+    driver: bridge
