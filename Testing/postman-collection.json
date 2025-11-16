@@ -1,0 +1,125 @@
+{
+  "info": {
+    "name": "Meeting Reports System API",
+    "description": "API collection for Meeting Reports System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Check API and database health status"
+      },
+      "response": []
+    },
+    {
+      "name": "Get All Meetings",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/meetings",
+          "host": ["{{base_url}}"],
+          "path": ["meetings"]
+        },
+        "description": "Retrieve all meeting reports"
+      },
+      "response": []
+    },
+    {
+      "name": "Search Meetings - Thai",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/meetings?search=คณะกรรมการ",
+          "host": ["{{base_url}}"],
+          "path": ["meetings"],
+          "query": [
+            {
+              "key": "search",
+              "value": "คณะกรรมการ"
+            }
+          ]
+        },
+        "description": "Search meetings by Thai keyword"
+      },
+      "response": []
+    },
+    {
+      "name": "Search Meetings - Number",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/meetings?search=1/2568",
+          "host": ["{{base_url}}"],
+          "path": ["meetings"],
+          "query": [
+            {
+              "key": "search",
+              "value": "1/2568"
+            }
+          ]
+        },
+        "description": "Search meetings by meeting number"
+      },
+      "response": []
+    },
+    {
+      "name": "Search Meetings - Location",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/meetings?search=ดอกปีบ",
+          "host": ["{{base_url}}"],
+          "path": ["meetings"],
+          "query": [
+            {
+              "key": "search",
+              "value": "ดอกปีบ"
+            }
+          ]
+        },
+        "description": "Search meetings by location"
+      },
+      "response": []
+    },
+    {
+      "name": "Search Meetings - Empty",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/meetings?search=",
+          "host": ["{{base_url}}"],
+          "path": ["meetings"],
+          "query": [
+            {
+              "key": "search",
+              "value": ""
+            }
+          ]
+        },
+        "description": "Search with empty keyword (should return all)"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001/api",
+      "type": "string"
+    }
+  ]
+}
