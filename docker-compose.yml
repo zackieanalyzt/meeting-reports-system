@@ -9,7 +9,7 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - DB_HOST=192.168.100.70
+      - DB_HOST=localhost
       - DB_PORT=5432
       - DB_NAME=meeting_mgmt
       - DB_USER=postgres
