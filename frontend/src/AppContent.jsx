@@ -124,11 +124,13 @@ function AppContent() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="title">📋 ระบบจัดการการประชุม</h1>
+              {/*             
               <div className="status-bar">
                 <span className={`status-badge ${dbStatus.status === 'ok' ? 'status-ok' : 'status-error'}`}>
                   {dbStatus.status === 'ok' ? '🟢 เชื่อมต่อฐานข้อมูลสำเร็จ' : '🔴 ไม่สามารถเชื่อมต่อฐานข้อมูล'}
                 </span>
               </div>
+              */}
             </div>
             
             {/* User Info */}

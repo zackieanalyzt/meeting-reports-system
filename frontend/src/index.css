@@ -1990,3 +1990,8 @@ button {
     justify-content: center;
   }
 }
+
+/* Force padding for login input (fix icon overlap) */
+.login-form .form-input {
+  padding: 0.875rem 1rem 0.875rem 3rem !important;
+}
