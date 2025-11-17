@@ -804,10 +804,10 @@ app.put('/api/meetings/:id/report', authenticateToken, requireSecretary, upload.
     // Update meeting with report file
     const result = await db.query(
       `UPDATE meeting_reports 
-       SET file_path = $1, file_size = $2, updated_at = CURRENT_TIMESTAMP, updated_by = $4
-       WHERE id = $3 
+       SET file_path = $1, file_size = $2, updated_at = CURRENT_TIMESTAMP, updated_by = $3
+       WHERE id = $4 
        RETURNING *`,
-      [`/uploads/${req.file.filename}`, req.file.size, meetingId, req.user.username]
+      [`/uploads/${req.file.filename}`, req.file.size, req.user.username, meetingId]
     );
 
     if (result.rows.length === 0) {

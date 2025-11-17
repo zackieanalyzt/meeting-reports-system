@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createAgenda, uploadFile, getMeetings } from '../services/api';
+import MultipleFileUpload from './MultipleFileUpload';
 
 const DEPARTMENTS = [
   'กลุ่มงานบริหาร',
@@ -29,7 +30,7 @@ function AgendaForm({ onSuccess, onCancel }) {
     submitting_department: 'กลุ่มงานบริหาร',
     description: ''
   });
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [meetings, setMeetings] = useState([]);
@@ -55,20 +56,9 @@ function AgendaForm({ onSuccess, onCancel }) {
     }));
   };
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      if (selectedFile.type !== 'application/pdf') {
-        setError('กรุณาเลือกไฟล์ PDF เท่านั้น');
-        return;
-      }
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        setError('ขนาดไฟล์ต้องไม่เกิน 10 MB');
-        return;
-      }
-      setFile(selectedFile);
-      setError(null);
-    }
+  const handleFilesChange = (selectedFiles) => {
+    setFiles(selectedFiles);
+    setError(null);
   };
 
   const handleSubmit = async (e) => {
@@ -85,23 +75,43 @@ function AgendaForm({ onSuccess, onCancel }) {
         throw new Error('กรุณาระบุหมายเลขวาระ');
       }
 
-      let agendaData = { ...formData };
+      // If files provided, use new endpoint with files
+      if (files && files.length > 0) {
+        const formDataToSend = new FormData();
+        
+        // Append form fields
+        Object.keys(formData).forEach(key => {
+          formDataToSend.append(key, formData[key]);
+        });
+        
+        // Append files
+        files.forEach(file => {
+          formDataToSend.append('files', file);
+        });
 
-      // Upload file if provided
-      if (file) {
-        const uploadResult = await uploadFile(file);
-        if (uploadResult.success) {
-          agendaData.file_path = uploadResult.filePath;
-          agendaData.file_size = uploadResult.fileSize;
+        const response = await fetch('http://localhost:3001/api/agendas/with-files', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formDataToSend
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          alert(`✅ บันทึกวาระพร้อม ${files.length} ไฟล์สำเร็จ`);
+          if (onSuccess) onSuccess();
+        } else {
+          throw new Error(result.message || 'บันทึกไม่สำเร็จ');
         }
-      }
-
-      // Create agenda record
-      const result = await createAgenda(agendaData);
-
-      if (result.success) {
-        alert('✅ บันทึกวาระการประชุมสำเร็จ');
-        if (onSuccess) onSuccess();
+      } else {
+        // No files, use regular endpoint
+        const result = await createAgenda(formData);
+        if (result.success) {
+          alert('✅ บันทึกวาระการประชุมสำเร็จ');
+          if (onSuccess) onSuccess();
+        }
       }
     } catch (err) {
       setError(err.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
@@ -216,17 +226,28 @@ function AgendaForm({ onSuccess, onCancel }) {
           </div>
 
           <div className="form-group">
+            <label>ไฟล์เอกสารวาระ (ถ้ามี)</label>
+            <MultipleFileUpload
+              maxFiles={5}
+              maxSizePerFile={10 * 1024 * 1024}
+              acceptedTypes={['.pdf', '.jpg', '.jpeg', '.docx', '.xlsx', '.md']}
+              onFilesChange={handleFilesChange}
+              label="อัพโหลดเอกสารวาระ"
+            />
+            <small>รองรับ: PDF, JPG, DOCX, XLSX, MD (สูงสุด 5 ไฟล์, 10MB/ไฟล์)</small>
+          </div>
+
+          <div className="form-group" style={{ display: 'none' }}>
             <label htmlFor="pdfFile">ไฟล์เอกสารวาระ (PDF)</label>
             <div className="file-input-wrapper">
               <input
                 type="file"
                 id="pdfFile"
                 accept=".pdf"
-                onChange={handleFileChange}
               />
-              {file && (
+              {files.length > 0 && (
                 <div className="file-info">
-                  <span>📄 {file.name}</span>
+                  <span>📄 {files[0].name}</span>
                   <span className="file-size">
                     ({(file.size / 1024 / 1024).toFixed(2)} MB)
                   </span>

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { getMeetings, uploadMeetingReport } from '../services/api';
+import MultipleFileUpload from './MultipleFileUpload';
 
 function UploadForm({ onSuccess, onCancel }) {
   const [selectedMeetingId, setSelectedMeetingId] = useState('');
   const [meetings, setMeetings] = useState([]);
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -23,20 +24,9 @@ function UploadForm({ onSuccess, onCancel }) {
     }
   };
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      if (selectedFile.type !== 'application/pdf') {
-        setError('กรุณาเลือกไฟล์ PDF เท่านั้น');
-        return;
-      }
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        setError('ขนาดไฟล์ต้องไม่เกิน 10 MB');
-        return;
-      }
-      setFile(selectedFile);
-      setError(null);
-    }
+  const handleFilesChange = (selectedFiles) => {
+    setFiles(selectedFiles);
+    setError(null);
   };
 
   const handleSubmit = async (e) => {
@@ -49,16 +39,41 @@ function UploadForm({ onSuccess, onCancel }) {
       if (!selectedMeetingId) {
         throw new Error('กรุณาเลือกการประชุม');
       }
-      if (!file) {
-        throw new Error('กรุณาเลือกไฟล์ PDF');
+      if (!files || files.length === 0) {
+        throw new Error('กรุณาเลือกไฟล์อย่างน้อย 1 ไฟล์');
       }
 
-      // Upload report to existing meeting
-      const result = await uploadMeetingReport(selectedMeetingId, file);
+      // Upload multiple files
+      if (files.length === 1) {
+        // Single file upload
+        const result = await uploadMeetingReport(selectedMeetingId, files[0]);
+        if (result.success) {
+          alert('✅ อัพโหลดรายงานสำเร็จ');
+          if (onSuccess) onSuccess();
+        }
+      } else {
+        // Multiple files upload
+        const formData = new FormData();
+        files.forEach(file => {
+          formData.append('files', file);
+        });
 
-      if (result.success) {
-        alert('✅ อัพโหลดรายงานสำเร็จ');
-        if (onSuccess) onSuccess();
+        const response = await fetch(`http://localhost:3001/api/meetings/${selectedMeetingId}/reports-multiple`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formData
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          alert(`✅ อัพโหลด ${files.length} ไฟล์สำเร็จ`);
+          if (onSuccess) onSuccess();
+        } else {
+          throw new Error(result.message || 'อัพโหลดไม่สำเร็จ');
+        }
       }
     } catch (err) {
       setError(err.message || 'เกิดข้อผิดพลาดในการอัพโหลดรายงาน');
@@ -129,26 +144,15 @@ function UploadForm({ onSuccess, onCancel }) {
           )}
 
           <div className="form-group">
-            <label htmlFor="pdfFile">ไฟล์รายงาน PDF *</label>
-            <div className="file-input-wrapper">
-              <input
-                type="file"
-                id="pdfFile"
-                accept=".pdf"
-                onChange={handleFileChange}
-                required
-                disabled={!selectedMeetingId}
-              />
-              {file && (
-                <div className="file-info">
-                  <span>📄 {file.name}</span>
-                  <span className="file-size">
-                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                  </span>
-                </div>
-              )}
-            </div>
-            <small>ไฟล์ PDF ขนาดไม่เกิน 10 MB</small>
+            <label>ไฟล์รายงาน *</label>
+            <MultipleFileUpload
+              maxFiles={10}
+              maxSizePerFile={10 * 1024 * 1024}
+              acceptedTypes={['.pdf', '.jpg', '.jpeg', '.docx', '.xlsx', '.md']}
+              onFilesChange={handleFilesChange}
+              label="อัพโหลดรายงานการประชุม"
+            />
+            <small>รองรับ: PDF, JPG, DOCX, XLSX, MD (สูงสุด 10 ไฟล์, 10MB/ไฟล์)</small>
           </div>
 
           <div className="form-actions">
