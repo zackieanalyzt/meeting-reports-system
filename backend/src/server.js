@@ -9,9 +9,20 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Import middleware
+const { authenticateToken } = require('./middleware/auth');
+const { requireSecretary, requireSecretaryOrManager } = require('./middleware/permissions');
+const { logView, logDownload } = require('./middleware/audit');
+
+// Import routes
+const authRoutes = require('./routes/auth');
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Auth routes (public - no authentication required)
+app.use('/api/auth', authRoutes);
 
 // Static file serving for uploads
 const UPLOADS_PATH = process.env.UPLOADS_PATH || path.join(__dirname, '../../uploads');
@@ -145,8 +156,8 @@ app.get('/api/health/detailed', async (req, res) => {
   res.json(health);
 });
 
-// Get all meetings
-app.get('/api/meetings', async (req, res) => {
+// Get all meetings (protected route)
+app.get('/api/meetings', authenticateToken, logView('meeting'), async (req, res) => {
   try {
     const { search } = req.query;
     let query = 'SELECT * FROM meeting_reports';
@@ -183,8 +194,8 @@ app.get('/api/meetings', async (req, res) => {
   }
 });
 
-// Get meeting by ID
-app.get('/api/meetings/:id', async (req, res) => {
+// Get meeting by ID (protected route)
+app.get('/api/meetings/:id', authenticateToken, logView('meeting'), async (req, res) => {
   try {
     const { id } = req.params;
     const result = await db.query('SELECT * FROM meeting_reports WHERE id = $1', [id]);
@@ -215,8 +226,8 @@ app.get('/api/meetings/:id', async (req, res) => {
   }
 });
 
-// Upload file endpoint
-app.post('/api/upload', upload.single('pdfFile'), (req, res) => {
+// Upload file endpoint (secretary only)
+app.post('/api/upload', authenticateToken, requireSecretary, upload.single('pdfFile'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -242,8 +253,8 @@ app.post('/api/upload', upload.single('pdfFile'), (req, res) => {
   }
 });
 
-// Create meeting
-app.post('/api/meetings', async (req, res) => {
+// Create meeting (secretary only)
+app.post('/api/meetings', authenticateToken, requireSecretary, async (req, res) => {
   try {
     const {
       meeting_number,
@@ -287,8 +298,8 @@ app.post('/api/meetings', async (req, res) => {
   }
 });
 
-// Update meeting
-app.put('/api/meetings/:id', async (req, res) => {
+// Update meeting (secretary only)
+app.put('/api/meetings/:id', authenticateToken, requireSecretary, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -334,8 +345,8 @@ app.put('/api/meetings/:id', async (req, res) => {
   }
 });
 
-// Delete meeting
-app.delete('/api/meetings/:id', async (req, res) => {
+// Delete meeting (secretary only)
+app.delete('/api/meetings/:id', authenticateToken, requireSecretary, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -390,8 +401,8 @@ module.exports = app;
 // Agenda Management Endpoints
 // ========================================
 
-// Get all agendas with filters
-app.get('/api/agendas', async (req, res) => {
+// Get all agendas with filters (protected route)
+app.get('/api/agendas', authenticateToken, logView('agenda'), async (req, res) => {
   try {
     const { meeting_number, department, type } = req.query;
     let query = 'SELECT * FROM meeting_agendas';
@@ -436,8 +447,8 @@ app.get('/api/agendas', async (req, res) => {
   }
 });
 
-// Get agenda by ID
-app.get('/api/agendas/:id', async (req, res) => {
+// Get agenda by ID (protected route)
+app.get('/api/agendas/:id', authenticateToken, logView('agenda'), async (req, res) => {
   try {
     const { id } = req.params;
     const result = await db.query('SELECT * FROM meeting_agendas WHERE id = $1', [id]);
@@ -463,8 +474,8 @@ app.get('/api/agendas/:id', async (req, res) => {
   }
 });
 
-// Create agenda
-app.post('/api/agendas', async (req, res) => {
+// Create agenda (secretary or manager only)
+app.post('/api/agendas', authenticateToken, requireSecretaryOrManager, async (req, res) => {
   try {
     const {
       meeting_number,
@@ -508,8 +519,8 @@ app.post('/api/agendas', async (req, res) => {
   }
 });
 
-// Update agenda
-app.put('/api/agendas/:id', async (req, res) => {
+// Update agenda (secretary or manager only)
+app.put('/api/agendas/:id', authenticateToken, requireSecretaryOrManager, async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -555,8 +566,8 @@ app.put('/api/agendas/:id', async (req, res) => {
   }
 });
 
-// Delete agenda
-app.delete('/api/agendas/:id', async (req, res) => {
+// Delete agenda (secretary or manager only)
+app.delete('/api/agendas/:id', authenticateToken, requireSecretaryOrManager, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -592,8 +603,8 @@ app.delete('/api/agendas/:id', async (req, res) => {
 // Meeting Management (Separated from Report Upload)
 // ========================================
 
-// Create meeting without report
-app.post('/api/meetings/create', async (req, res) => {
+// Create meeting without report (secretary only)
+app.post('/api/meetings/create', authenticateToken, requireSecretary, async (req, res) => {
   try {
     const {
       meeting_number,
@@ -649,8 +660,8 @@ app.post('/api/meetings/create', async (req, res) => {
   }
 });
 
-// Upload report to existing meeting
-app.put('/api/meetings/:id/report', upload.single('pdfFile'), async (req, res) => {
+// Upload report to existing meeting (secretary only)
+app.put('/api/meetings/:id/report', authenticateToken, requireSecretary, upload.single('pdfFile'), async (req, res) => {
   try {
     const meetingId = req.params.id;
 
@@ -692,8 +703,8 @@ app.put('/api/meetings/:id/report', upload.single('pdfFile'), async (req, res) =
   }
 });
 
-// Get meetings with agenda count
-app.get('/api/meetings/with-stats', async (req, res) => {
+// Get meetings with agenda count (protected route)
+app.get('/api/meetings/with-stats', authenticateToken, async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -733,8 +744,8 @@ app.get('/api/meetings/with-stats', async (req, res) => {
 // Report Status Endpoints
 // ========================================
 
-// Get meetings with reports
-app.get('/api/meetings/with-reports', async (req, res) => {
+// Get meetings with reports (protected route)
+app.get('/api/meetings/with-reports', authenticateToken, logView('meeting_report'), async (req, res) => {
   try {
     const query = `
       SELECT 
@@ -769,8 +780,8 @@ app.get('/api/meetings/with-reports', async (req, res) => {
   }
 });
 
-// Get meetings without reports
-app.get('/api/meetings/without-reports', async (req, res) => {
+// Get meetings without reports (protected route)
+app.get('/api/meetings/without-reports', authenticateToken, async (req, res) => {
   try {
     const query = `
       SELECT 

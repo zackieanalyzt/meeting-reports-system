@@ -197,6 +197,7 @@ meeting-reports-system/
 
 ### Backend Environment (.env)
 ```env
+# PostgreSQL Configuration
 DB_HOST=192.168.100.70
 DB_PORT=5432
 DB_NAME=meeting_mgmt
@@ -204,6 +205,17 @@ DB_USER=postgres
 DB_PASS=grespost
 PORT=3001
 NODE_ENV=production
+
+# MariaDB Configuration (Authentication)
+MARIADB_HOST=192.168.100.170
+MARIADB_PORT=3306
+MARIADB_DATABASE=hr
+MARIADB_USER=root
+MARIADB_PASSWORD=cjv671
+
+# JWT Configuration
+JWT_SECRET=meeting_mgmt_secret_key_2025_lamphun_pho
+JWT_EXPIRES_IN=24h
 ```
 
 ### Frontend Environment (.env)
@@ -261,12 +273,15 @@ docker-compose ps
 
 ## 🔒 Security
 
-- ✅ SQL Injection Prevention (Parameterized queries)
-- ✅ XSS Protection (Input sanitization)
-- ✅ CORS Configuration
-- ✅ Security Headers (Nginx)
-- ✅ Environment Variables
-- ✅ Docker Security Best Practices
+- ✅ **Authentication**: JWT token-based authentication
+- ✅ **Authorization**: Role-based access control (RBAC)
+- ✅ **SQL Injection Prevention**: Parameterized queries
+- ✅ **XSS Protection**: Input sanitization
+- ✅ **CORS Configuration**: Proper CORS setup
+- ✅ **Security Headers**: Nginx security headers
+- ✅ **Environment Variables**: Sensitive data protection
+- ✅ **Audit Logging**: Complete activity tracking
+- ✅ **Docker Security**: Best practices implementation
 
 ---
 
@@ -315,16 +330,66 @@ docker-compose build --no-cache
 
 ---
 
-## 🔮 Future Enhancements
+## 🔐 Authentication & Authorization (Phase 2A - ✅ Complete)
 
-- [ ] User Authentication & Authorization
-- [ ] File Upload Functionality
-- [ ] CRUD Operations
-- [ ] Advanced Filters
-- [ ] Pagination
-- [ ] Export to Excel/CSV
+ระบบ Authentication และ Role-Based Access Control ได้รับการพัฒนาเสร็จสิ้นแล้ว!
+
+### คุณสมบัติ Authentication
+- ✅ **Login System**: เชื่อมต่อกับ MariaDB HR database
+- ✅ **JWT Authentication**: Token-based authentication (24h expiry)
+- ✅ **Role-Based Access Control**: 3 roles (Secretary, Manager, User)
+- ✅ **Protected Routes**: บังคับ login ทุก endpoint
+- ✅ **Audit Logging**: บันทึกการใช้งานทั้งหมด
+- ✅ **Auto User Creation**: สร้าง user record อัตโนมัติ
+
+### Role Permissions
+| Feature | Secretary | Manager | User |
+|---------|-----------|---------|------|
+| ดูการประชุม | ✅ | ✅ | ✅ |
+| สร้าง/แก้ไข/ลบ การประชุม | ✅ | ❌ | ❌ |
+| ดูวาระ | ✅ | ✅ | ✅ |
+| สร้าง/แก้ไข/ลบ วาระ | ✅ | ✅ | ❌ |
+| ดูรายงาน | ✅ | ✅ | ✅ |
+| อัพโหลดรายงาน | ✅ | ❌ | ❌ |
+
+### Quick Start Authentication
+```bash
+# 1. Setup database schema
+psql -h 192.168.100.70 -p 5432 -U postgres -d meeting_mgmt -f database/auth-schema.sql
+
+# 2. Add users with special roles
+psql -h 192.168.100.70 -p 5432 -U postgres -d meeting_mgmt -f database/sample-users.sql
+
+# 3. Start services
+cd backend && npm start
+cd frontend && npm run dev
+
+# 4. Login at http://localhost:5173
+```
+
+### Authentication Documentation
+- 🚀 [Quick Start Guide](./QUICK_START_AUTH.md) - เริ่มต้นใน 5 นาที
+- 📖 [Setup Guide](./AUTHENTICATION_SETUP.md) - คู่มือการติดตั้งแบบละเอียด
+- 📡 [API Documentation](./API_AUTH_DOCUMENTATION.md) - API endpoints และ permissions
+- 🧪 [Test Scenarios](./TEST_SCENARIOS.md) - วิธีทดสอบระบบ
+- 📊 [Implementation Summary](./PHASE2A_IMPLEMENTATION_SUMMARY.md) - สรุปการพัฒนา
+- ✅ [Complete Guide](./AUTHENTICATION_COMPLETE.md) - สรุปทั้งหมด
+
+---
+
+## 🔮 Future Enhancements (Phase 2B)
+
+- [ ] Statistics Dashboard
+- [ ] User Management UI
+- [ ] Role Assignment Interface
+- [ ] Download Statistics
+- [ ] Multiple File Upload
+- [ ] Advanced Audit Reports
 - [ ] Email Notifications
 - [ ] Mobile App
+- [ ] Export to Excel/CSV
+- [ ] Advanced Filters
+- [ ] Pagination
 
 ---
 
