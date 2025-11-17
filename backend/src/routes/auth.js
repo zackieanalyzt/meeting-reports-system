@@ -44,7 +44,7 @@ router.post('/login', async (req, res) => {
       [username]
     );
 
-    let role = 'user'; // Default role
+    let role = 'user'; // Default role for users not in users table
     let isActive = true;
 
     if (roleResult.rows.length > 0) {
@@ -58,15 +58,10 @@ router.post('/login', async (req, res) => {
           message: 'บัญชีผู้ใช้ถูกระงับการใช้งาน'
         });
       }
-    } else {
-      // Create user record with default role if not exists
-      await db.query(
-        'INSERT INTO users (username, role, is_active) VALUES ($1, $2, $3) ON CONFLICT (username) DO NOTHING',
-        [username, 'user', true]
-      );
     }
+    // Note: ไม่สร้าง record อัตโนมัติ - ให้ใช้ default role 'user' สำหรับคนที่ไม่มีในตาราง
 
-    // Generate JWT token
+    // Generate JWT token สำหรับทุกคน (รวม user ธรรมดา)
     const token = jwt.sign(
       {
         username: personnel.username,
@@ -82,6 +77,7 @@ router.post('/login', async (req, res) => {
     // Log successful login
     await auditLog(username, 'login', null, null, { role }, req);
 
+    // ส่ง response ที่ถูกต้องสำหรับทุก role
     res.json({
       success: true,
       message: 'เข้าสู่ระบบสำเร็จ',
