@@ -236,7 +236,7 @@ function AppContent() {
 
       <footer className="footer">
         <div className="container">
-          <p>© 2025 ระบบจัดการการประชุม | สำนักงานสาธารณสุขจังหวัดลำพูน</p>
+          <p>© 2025 ระบบจัดการการประชุม | โรงพยาบาลลี้</p>
         </div>
       </footer>
 

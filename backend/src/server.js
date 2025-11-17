@@ -45,17 +45,27 @@ const storage = multer.diskStorage({
   }
 });
 
+// File type validation
+const allowedMimeTypes = [
+  'application/pdf',
+  'image/jpeg',
+  'image/jpg',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
+  'text/markdown'
+];
+
 const upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
+    if (allowedMimeTypes.includes(file.mimetype) || file.originalname.endsWith('.md')) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF files are allowed'), false);
+      cb(new Error('File type not allowed. Allowed: PDF, JPG, DOCX, XLSX, MD'), false);
     }
   },
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: 10 * 1024 * 1024 // 10MB limit per file
   }
 });
 
@@ -226,7 +236,7 @@ app.get('/api/meetings/:id', authenticateToken, logView('meeting'), async (req, 
   }
 });
 
-// Upload file endpoint (secretary only)
+// Upload single file endpoint (secretary only)
 app.post('/api/upload', authenticateToken, requireSecretary, upload.single('pdfFile'), (req, res) => {
   try {
     if (!req.file) {
@@ -245,6 +255,39 @@ app.post('/api/upload', authenticateToken, requireSecretary, upload.single('pdfF
     });
   } catch (error) {
     console.error('Upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Upload failed',
+      error: error.message
+    });
+  }
+});
+
+// Upload multiple files endpoint (secretary only)
+app.post('/api/upload-multiple', authenticateToken, requireSecretary, upload.array('files', 10), (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No files uploaded'
+      });
+    }
+
+    const uploadedFiles = req.files.map(file => ({
+      filePath: `/uploads/${file.filename}`,
+      fileSize: file.size,
+      fileName: file.originalname,
+      mimeType: file.mimetype
+    }));
+
+    res.json({
+      success: true,
+      message: `${req.files.length} files uploaded successfully`,
+      files: uploadedFiles,
+      count: req.files.length
+    });
+  } catch (error) {
+    console.error('Multiple upload error:', error);
     res.status(500).json({
       success: false,
       message: 'Upload failed',
