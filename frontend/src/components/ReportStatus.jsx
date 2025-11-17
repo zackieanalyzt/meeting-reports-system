@@ -86,6 +86,7 @@ function ReportStatus({ onUploadClick }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     download
+                    title={`ดาวน์โหลด: ${meeting.meeting_title || 'รายงานการประชุม'}`}
                   >
                     📥 ดาวน์โหลดรายงาน
                   </a>

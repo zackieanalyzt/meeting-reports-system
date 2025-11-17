@@ -70,6 +70,7 @@ function MeetingList({ meetings, loading, searchTerm }) {
                 className="download-button"
                 target="_blank"
                 rel="noopener noreferrer"
+                title={`ดาวน์โหลด: ${meeting.meeting_title || 'รายงานการประชุม'}`}
               >
                 <span className="button-icon">⬇️</span>
                 <span>ดาวน์โหลดรายงาน</span>

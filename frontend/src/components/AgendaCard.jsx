@@ -69,6 +69,7 @@ function AgendaCard({ agenda }) {
             className="download-button agenda-download"
             target="_blank"
             rel="noopener noreferrer"
+            title={`ดาวน์โหลด: ${agenda.agenda_topic || 'เอกสารวาระ'}`}
           >
             <span className="button-icon">⬇️</span>
             <span>ดาวน์โหลดเอกสาร</span>

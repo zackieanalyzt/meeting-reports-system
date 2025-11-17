@@ -320,11 +320,15 @@ app.post('/api/meetings', authenticateToken, requireSecretary, async (req, res) 
 
     const result = await db.query(
       `INSERT INTO meeting_reports 
-       (meeting_number, meeting_title, meeting_date, meeting_time, location, department, file_path, file_size)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       (meeting_number, meeting_title, meeting_date, meeting_time, location, department, file_path, file_size, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [meeting_number, meeting_title, meeting_date, meeting_time, location, department, file_path, file_size]
+      [meeting_number, meeting_title, meeting_date, meeting_time, location, department, file_path, file_size, req.user.username]
     );
+
+    // Audit log
+    const { auditLog } = require('./middleware/audit');
+    await auditLog(req.user.username, 'create_meeting', 'meeting_reports', result.rows[0].id, { meeting_number }, req);
 
     res.status(201).json({
       success: true,
@@ -360,10 +364,10 @@ app.put('/api/meetings/:id', authenticateToken, requireSecretary, async (req, re
       `UPDATE meeting_reports 
        SET meeting_number = $1, meeting_title = $2, meeting_date = $3, 
            meeting_time = $4, location = $5, department = $6, 
-           file_path = $7, file_size = $8, updated_at = CURRENT_TIMESTAMP
+           file_path = $7, file_size = $8, updated_at = CURRENT_TIMESTAMP, updated_by = $10
        WHERE id = $9
        RETURNING *`,
-      [meeting_number, meeting_title, meeting_date, meeting_time, location, department, file_path, file_size, id]
+      [meeting_number, meeting_title, meeting_date, meeting_time, location, department, file_path, file_size, id, req.user.username]
     );
 
     if (result.rows.length === 0) {
@@ -372,6 +376,10 @@ app.put('/api/meetings/:id', authenticateToken, requireSecretary, async (req, re
         error: 'Meeting not found'
       });
     }
+
+    // Audit log
+    const { auditLog } = require('./middleware/audit');
+    await auditLog(req.user.username, 'update_meeting', 'meeting_reports', id, { meeting_number }, req);
 
     res.json({
       success: true,
@@ -404,6 +412,10 @@ app.delete('/api/meetings/:id', authenticateToken, requireSecretary, async (req,
         error: 'Meeting not found'
       });
     }
+
+    // Audit log
+    const { auditLog } = require('./middleware/audit');
+    await auditLog(req.user.username, 'delete_meeting', 'meeting_reports', id, { meeting_number: result.rows[0].meeting_number }, req);
 
     res.json({
       success: true,
@@ -541,11 +553,15 @@ app.post('/api/agendas', authenticateToken, requireSecretaryOrManager, async (re
 
     const result = await db.query(
       `INSERT INTO meeting_agendas 
-       (meeting_number, agenda_number, agenda_topic, agenda_type, submitting_department, description, file_path, file_size)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       (meeting_number, agenda_number, agenda_topic, agenda_type, submitting_department, description, file_path, file_size, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [meeting_number, agenda_number, agenda_topic, agenda_type, submitting_department, description, file_path, file_size]
+      [meeting_number, agenda_number, agenda_topic, agenda_type, submitting_department, description, file_path, file_size, req.user.username]
     );
+
+    // Audit log
+    const { auditLog } = require('./middleware/audit');
+    await auditLog(req.user.username, 'create_agenda', 'meeting_agendas', result.rows[0].id, { agenda_number }, req);
 
     res.status(201).json({
       success: true,
@@ -557,6 +573,68 @@ app.post('/api/agendas', authenticateToken, requireSecretaryOrManager, async (re
     res.status(500).json({
       success: false,
       error: 'Failed to create agenda',
+      message: error.message
+    });
+  }
+});
+
+// Create agenda with multiple files (secretary or manager only)
+app.post('/api/agendas/with-files', authenticateToken, requireSecretaryOrManager, upload.array('files', 5), async (req, res) => {
+  try {
+    const {
+      meeting_number,
+      agenda_number,
+      agenda_topic,
+      agenda_type,
+      submitting_department,
+      description
+    } = req.body;
+
+    // Validate required fields
+    if (!meeting_number || !agenda_number || !agenda_topic || !agenda_type || !submitting_department) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields'
+      });
+    }
+
+    // Create agenda first
+    const agendaResult = await db.query(
+      `INSERT INTO meeting_agendas 
+       (meeting_number, agenda_number, agenda_topic, agenda_type, submitting_department, description, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [meeting_number, agenda_number, agenda_topic, agenda_type, submitting_department, description, req.user.username]
+    );
+
+    const agendaId = agendaResult.rows[0].id;
+
+    // If files uploaded, save to agenda_files table
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        await db.query(
+          `INSERT INTO agenda_files (agenda_id, file_name, file_path, file_size, file_type, uploaded_by)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [agendaId, file.originalname, `/uploads/${file.filename}`, file.size, file.mimetype, req.user.username]
+        );
+      }
+    }
+
+    // Audit log
+    const { auditLog } = require('./middleware/audit');
+    await auditLog(req.user.username, 'create_agenda', 'meeting_agendas', agendaId, { files_count: req.files?.length || 0 }, req);
+
+    res.status(201).json({
+      success: true,
+      message: 'Agenda created successfully with files',
+      data: agendaResult.rows[0],
+      files_uploaded: req.files?.length || 0
+    });
+  } catch (error) {
+    console.error('Error creating agenda with files:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create agenda with files',
       message: error.message
     });
   }
@@ -581,10 +659,10 @@ app.put('/api/agendas/:id', authenticateToken, requireSecretaryOrManager, async 
       `UPDATE meeting_agendas 
        SET meeting_number = $1, agenda_number = $2, agenda_topic = $3, 
            agenda_type = $4, submitting_department = $5, description = $6,
-           file_path = $7, file_size = $8, updated_at = CURRENT_TIMESTAMP
+           file_path = $7, file_size = $8, updated_at = CURRENT_TIMESTAMP, updated_by = $10
        WHERE id = $9
        RETURNING *`,
-      [meeting_number, agenda_number, agenda_topic, agenda_type, submitting_department, description, file_path, file_size, id]
+      [meeting_number, agenda_number, agenda_topic, agenda_type, submitting_department, description, file_path, file_size, id, req.user.username]
     );
 
     if (result.rows.length === 0) {
@@ -593,6 +671,10 @@ app.put('/api/agendas/:id', authenticateToken, requireSecretaryOrManager, async 
         error: 'Agenda not found'
       });
     }
+
+    // Audit log
+    const { auditLog } = require('./middleware/audit');
+    await auditLog(req.user.username, 'update_agenda', 'meeting_agendas', id, { agenda_number }, req);
 
     res.json({
       success: true,
@@ -625,6 +707,10 @@ app.delete('/api/agendas/:id', authenticateToken, requireSecretaryOrManager, asy
         error: 'Agenda not found'
       });
     }
+
+    // Audit log
+    const { auditLog } = require('./middleware/audit');
+    await auditLog(req.user.username, 'delete_agenda', 'meeting_agendas', id, { agenda_number: result.rows[0].agenda_number }, req);
 
     res.json({
       success: true,
@@ -703,7 +789,7 @@ app.post('/api/meetings/create', authenticateToken, requireSecretary, async (req
   }
 });
 
-// Upload report to existing meeting (secretary only)
+// Upload report to existing meeting (secretary only) - Single file
 app.put('/api/meetings/:id/report', authenticateToken, requireSecretary, upload.single('pdfFile'), async (req, res) => {
   try {
     const meetingId = req.params.id;
@@ -718,10 +804,10 @@ app.put('/api/meetings/:id/report', authenticateToken, requireSecretary, upload.
     // Update meeting with report file
     const result = await db.query(
       `UPDATE meeting_reports 
-       SET file_path = $1, file_size = $2, updated_at = CURRENT_TIMESTAMP 
+       SET file_path = $1, file_size = $2, updated_at = CURRENT_TIMESTAMP, updated_by = $4
        WHERE id = $3 
        RETURNING *`,
-      [`/uploads/${req.file.filename}`, req.file.size, meetingId]
+      [`/uploads/${req.file.filename}`, req.file.size, meetingId, req.user.username]
     );
 
     if (result.rows.length === 0) {
@@ -731,6 +817,10 @@ app.put('/api/meetings/:id/report', authenticateToken, requireSecretary, upload.
       });
     }
 
+    // Audit log
+    const { auditLog } = require('./middleware/audit');
+    await auditLog(req.user.username, 'upload_report', 'meeting_reports', meetingId, { file_name: req.file.originalname }, req);
+
     res.json({
       success: true,
       message: 'อัพโหลดรายงานสำเร็จ',
@@ -738,6 +828,55 @@ app.put('/api/meetings/:id/report', authenticateToken, requireSecretary, upload.
     });
   } catch (error) {
     console.error('Error uploading report:', error);
+    res.status(500).json({
+      success: false,
+      message: 'อัพโหลดรายงานไม่สำเร็จ',
+      error: error.message
+    });
+  }
+});
+
+// Upload multiple reports to existing meeting (secretary only) - Multiple files
+app.put('/api/meetings/:id/reports-multiple', authenticateToken, requireSecretary, upload.array('files', 10), async (req, res) => {
+  try {
+    const meetingId = req.params.id;
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'ไม่พบไฟล์ที่อัพโหลด'
+      });
+    }
+
+    // Check if meeting exists
+    const meetingCheck = await db.query('SELECT id FROM meeting_reports WHERE id = $1', [meetingId]);
+    if (meetingCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'ไม่พบการประชุมที่ระบุ'
+      });
+    }
+
+    // Save all files to meeting_files table
+    for (const file of req.files) {
+      await db.query(
+        `INSERT INTO meeting_files (meeting_id, file_name, file_path, file_size, file_type, uploaded_by)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [meetingId, file.originalname, `/uploads/${file.filename}`, file.size, file.mimetype, req.user.username]
+      );
+    }
+
+    // Audit log
+    const { auditLog } = require('./middleware/audit');
+    await auditLog(req.user.username, 'upload_multiple_reports', 'meeting_reports', meetingId, { files_count: req.files.length }, req);
+
+    res.json({
+      success: true,
+      message: `อัพโหลด ${req.files.length} ไฟล์สำเร็จ`,
+      files_uploaded: req.files.length
+    });
+  } catch (error) {
+    console.error('Error uploading multiple reports:', error);
     res.status(500).json({
       success: false,
       message: 'อัพโหลดรายงานไม่สำเร็จ',
