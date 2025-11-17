@@ -200,6 +200,21 @@ GROUP BY action;
 
 ---
 
+## ✅ Bug Fixes
+
+### Authentication Token Issue (Nov 17, 2025)
+- **ปัญหา**: 401 Unauthorized Error ในทุก API calls หลัง login
+- **สาเหตุ**: Token ไม่ถูกส่งไปกับ API requests
+- **การแก้ไข**: 
+  - เพิ่ม request interceptor ใน api.js
+  - เพิ่ม response interceptor สำหรับ handle 401
+  - แก้ไข upload functions ให้ใช้ api instance
+  - Sync localStorage กับ token state
+- **เอกสาร**: [BUGFIX_AUTH_TOKEN.md](./BUGFIX_AUTH_TOKEN.md)
+- **Status**: ✅ Fixed & Tested
+
+---
+
 ## 📞 Support
 
 หากพบปัญหาหรือต้องการความช่วยเหลือ:
@@ -208,6 +223,7 @@ GROUP BY action;
 2. ดู backend/frontend console logs
 3. ตรวจสอบ audit_logs table
 4. ทดสอบตาม TEST_SCENARIOS.md
+5. ดู BUGFIX_AUTH_TOKEN.md ถ้าพบปัญหา token
 
 ---
 

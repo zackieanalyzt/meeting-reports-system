@@ -10,6 +10,33 @@ const api = axios.create({
   }
 });
 
+// Request interceptor to add token to all requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle 401 errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid - clear storage and redirect to login
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const getMeetings = async (searchTerm = '') => {
   try {
     const response = await api.get('/meetings', {
@@ -57,8 +84,8 @@ export const uploadMeetingReport = async (meetingId, file) => {
     const formData = new FormData();
     formData.append('pdfFile', file);
 
-    const response = await axios.put(
-      `${API_URL}/meetings/${meetingId}/report`,
+    const response = await api.put(
+      `/meetings/${meetingId}/report`,
       formData,
       {
         headers: {
@@ -100,7 +127,7 @@ export const uploadFile = async (file) => {
     const formData = new FormData();
     formData.append('pdfFile', file);
 
-    const response = await axios.post(`${API_URL}/upload`, formData, {
+    const response = await api.post('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

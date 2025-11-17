@@ -168,12 +168,23 @@ SELECT COUNT(*) FROM audit_logs;
 
 ---
 
+## 🐛 Bug Fixes
+
+### ✅ Fixed: Authentication Token Issue (Nov 17, 2025)
+- **ปัญหา**: 401 Unauthorized Error ในทุก API calls
+- **สาเหตุ**: Token ไม่ถูกส่งไปกับ API requests
+- **การแก้ไข**: เพิ่ม request/response interceptors
+- **เอกสาร**: [BUGFIX_AUTH_TOKEN.md](./BUGFIX_AUTH_TOKEN.md)
+
+---
+
 ## 📞 ต้องการความช่วยเหลือ?
 
 1. อ่าน **QUICK_START_AUTH.md** ก่อน
 2. ตรวจสอบ backend/frontend console logs
 3. ดู audit_logs table
 4. อ่าน **AUTHENTICATION_SETUP.md** สำหรับรายละเอียด
+5. ดู **BUGFIX_AUTH_TOKEN.md** ถ้าพบปัญหา token
 
 ---
 
@@ -188,6 +199,7 @@ SELECT COUNT(*) FROM audit_logs;
 - [ ] ตรวจสอบ role แล้ว
 - [ ] ทดสอบ permissions แล้ว
 - [ ] ตรวจสอบ audit logs แล้ว
+- [ ] ✅ Bug Fix: Token issue แก้ไขแล้ว (Nov 17, 2025)
 
 ---
 

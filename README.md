@@ -374,6 +374,7 @@ cd frontend && npm run dev
 - 🧪 [Test Scenarios](./TEST_SCENARIOS.md) - วิธีทดสอบระบบ
 - 📊 [Implementation Summary](./PHASE2A_IMPLEMENTATION_SUMMARY.md) - สรุปการพัฒนา
 - ✅ [Complete Guide](./AUTHENTICATION_COMPLETE.md) - สรุปทั้งหมด
+- 🐛 [Bug Fix: Token Issue](./BUGFIX_AUTH_TOKEN.md) - แก้ไข 401 Error (Nov 17, 2025)
 
 ---
 

@@ -16,12 +16,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('token'));
 
-  // Configure axios defaults
+  // Configure axios defaults and sync with localStorage
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      localStorage.setItem('token', token);
     } else {
       delete axios.defaults.headers.common['Authorization'];
+      localStorage.removeItem('token');
     }
   }, [token]);
 
@@ -56,13 +58,17 @@ export const AuthProvider = ({ children }) => {
 
       if (response.data.success) {
         const { token, user } = response.data;
-        localStorage.setItem('token', token);
         setToken(token);
         setUser(user);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         return { success: true };
+      } else {
+        return {
+          success: false,
+          message: response.data.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ'
+        };
       }
     } catch (error) {
+      console.error('Login error:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ'
@@ -72,14 +78,14 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post('http://localhost:3001/api/auth/logout');
+      if (token) {
+        await axios.post('http://localhost:3001/api/auth/logout');
+      }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('token');
       setToken(null);
       setUser(null);
-      delete axios.defaults.headers.common['Authorization'];
     }
   };
 
