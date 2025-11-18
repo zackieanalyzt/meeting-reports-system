@@ -267,7 +267,7 @@ function AgendaForm({ onSuccess, onCancel }) {
                 </div>
               )}
             </div>
-            <small>ไฟล์ PDF ขนาดไม่เกิน 10 MB (ไม่บังคับ)</small>
+            <small>ไฟล์ PDF ขนาดไม่เกิน 20 MB (ไม่บังคับ)</small>
           </div>
 
           <div className="form-actions">
