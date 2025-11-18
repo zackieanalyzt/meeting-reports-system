@@ -242,7 +242,7 @@ function AgendaForm({ onSuccess, onCancel }) {
             <label>ไฟล์เอกสารวาระ (ถ้ามี)</label>
             <MultipleFileUpload
               maxFiles={5}
-              maxSizePerFile={10 * 1024 * 1024}
+              maxSizePerFile={20 * 1024 * 1024}
               acceptedTypes={['.pdf', '.jpg', '.jpeg', '.docx', '.xlsx', '.md']}
               onFilesChange={handleFilesChange}
               label="อัพโหลดเอกสารวาระ"
@@ -262,7 +262,7 @@ function AgendaForm({ onSuccess, onCancel }) {
                 <div className="file-info">
                   <span>📄 {files[0].name}</span>
                   <span className="file-size">
-                    ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                    ({(files[0].size / 1024 / 1024).toFixed(2)} MB)
                   </span>
                 </div>
               )}
