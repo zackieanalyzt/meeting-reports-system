@@ -1995,3 +1995,44 @@ button {
 .login-form .form-input {
   padding: 0.875rem 1rem 0.875rem 3rem !important;
 }
+
+/* === Expand Agenda & Upload Form === */
+/*  เพิ่ม 18 พย 2568 @zackiehybrid   */
+/* ให้กล่องฟอร์มกว้างเต็ม */
+.upload-form-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 2rem !important;
+}
+
+/* ตัว card ฟอร์ม */
+.upload-form-card {
+  width: 100% !important;
+  max-width: 600px !important;   /* อยากให้ใหญ่กว่านี้ก็เพิ่มได้ */
+  margin: 0 auto !important;
+}
+
+/* form-row ให้ไม่บีบด้านข้าง */
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* ช่อง form ให้กว้างขึ้น */
+.form-group {
+  flex: 1 1 100% !important;  
+}
+
+/* textarea ยืดตามเนื้อหา */
+.upload-form textarea {
+  width: 100% !important;
+  min-height: 130px !important;
+  resize: both !important;    /* ← ยืดได้ทั้งแนวตั้งและแนวนอน */
+}
+
+/* กรอบอัปโหลดไฟล์ */
+.upload-dropzone {
+  width: 100% !important;
+  max-width: 100% !important;
+}
