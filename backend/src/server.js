@@ -33,7 +33,7 @@ if (!fs.existsSync(UPLOADS_PATH)) {
 }
 
 app.use('/uploads', express.static(UPLOADS_PATH));
-
+/*
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -42,6 +42,25 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const uniqueName = `meeting_${Date.now()}_${file.originalname}`;
     cb(null, uniqueName);
+  }
+});
+แก้ไขการอัพโหลดไฟล์ภาษาไทยแล้วอ่านไม่ออก @zackiehybrid 18 NOV 2025 */
+// Configure multer for file uploads (fix Thai filename encoding)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOADS_PATH);
+  },
+  filename: (req, file, cb) => {
+    // แปลงชื่อไฟล์จาก Latin1 → UTF-8 (แก้ไฟล์ชื่อไทยเพี้ยน)
+    const utf8Name = Buffer.from(file.originalname, 'latin1').toString('utf8');
+
+    // ลบอักขระต้องห้าม (กันพัง)
+    const safeName = utf8Name.replace(/[^\wก-ฮะ-์\. \-]/g, '');
+
+    // ตั้งชื่อไฟล์ใหม่แบบปลอดภัย
+    const finalName = `meeting_${Date.now()}_${safeName}`;
+
+    cb(null, finalName);
   }
 });
 
