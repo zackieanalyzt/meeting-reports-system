@@ -58,7 +58,8 @@ function UploadForm({ onSuccess, onCancel }) {
           formData.append('files', file);
         });
 
-        const response = await fetch(`http://localhost:3001/api/meetings/${selectedMeetingId}/reports-multiple`, {
+        //const response = await fetch(`http://localhost:3001/api/meetings/${selectedMeetingId}/reports-multiple`, {
+        const response = await fetch(`${API_BASE}/api/meetings/${selectedMeetingId}/reports-multiple`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -152,7 +153,7 @@ function UploadForm({ onSuccess, onCancel }) {
               onFilesChange={handleFilesChange}
               label="อัพโหลดรายงานการประชุม"
             />
-            <small>รองรับ: PDF, JPG, DOCX, XLSX, MD (สูงสุด 10 ไฟล์, 10MB/ไฟล์)</small>
+            <small>รองรับ: PDF, JPG, DOCX, XLSX, MD ,PNG (สูงสุด 10 ไฟล์, 20MB/ไฟล์)</small>
           </div>
 
           <div className="form-actions">

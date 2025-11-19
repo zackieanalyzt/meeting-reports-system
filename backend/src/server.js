@@ -69,6 +69,8 @@ const allowedMimeTypes = [
   'application/pdf',
   'image/jpeg',
   'image/jpg',
+  'image/png',
+  'application/vnd.ms-excel', // xls
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
   'text/markdown'
@@ -80,7 +82,7 @@ const upload = multer({
     if (allowedMimeTypes.includes(file.mimetype) || file.originalname.endsWith('.md')) {
       cb(null, true);
     } else {
-      cb(new Error('File type not allowed. Allowed: PDF, JPG, DOCX, XLSX, MD'), false);
+      cb(new Error('File type not allowed. Allowed: PDF, JPG, DOCX, XLS, XLSX, MD, PNG'), false);
     }
   },
   limits: {

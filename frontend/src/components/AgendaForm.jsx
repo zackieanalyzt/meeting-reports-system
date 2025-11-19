@@ -102,7 +102,8 @@ function AgendaForm({ onSuccess, onCancel }) {
           formDataToSend.append('files', file);
         });
 
-        const response = await fetch('http://localhost:3001/api/agendas/with-files', {
+        //const response = await fetch('http://localhost:3001/api/agendas/with-files', {
+        const response = await fetch(`${API_BASE}/api/agendas/with-files`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -243,11 +244,11 @@ function AgendaForm({ onSuccess, onCancel }) {
             <MultipleFileUpload
               maxFiles={5}
               maxSizePerFile={20 * 1024 * 1024}
-              acceptedTypes={['.pdf', '.jpg', '.jpeg', '.docx', '.xlsx', '.md']}
+              acceptedTypes={['.pdf', '.jpg', '.jpeg', '.docx', '.xlsx','.xls','.png', '.md']}
               onFilesChange={handleFilesChange}
               label="อัพโหลดเอกสารวาระ"
             />
-            <small>รองรับ: PDF, JPG, DOCX, XLSX, MD (สูงสุด 5 ไฟล์, 10MB/ไฟล์)</small>
+            <small>รองรับ: PDF, JPG, DOCX, XLSX, MD ,PNG ,XLS (สูงสุด 5 ไฟล์, 10MB/ไฟล์)</small>
           </div>
 
           <div className="form-group" style={{ display: 'none' }}>

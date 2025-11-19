@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 const MultipleFileUpload = ({ 
   maxFiles = 5, 
   maxSizePerFile = 10 * 1024 * 1024, // 10MB
-  acceptedTypes = ['.pdf', '.jpg', '.jpeg', '.docx', '.xlsx', '.md'],
+  acceptedTypes = ['.pdf', '.jpg', '.jpeg', '.docx','.xls', '.xlsx', '.md','.png'],
   onFilesChange,
   label = "อัพโหลดไฟล์"
 }) => {
@@ -119,10 +119,12 @@ const MultipleFileUpload = ({
         return '📄';
       case 'jpg':
       case 'jpeg':
+      case 'png':
         return '🖼️';
       case 'docx':
         return '📝';
       case 'xlsx':
+      case 'xls':
         return '📊';
       case 'md':
         return '📋';
@@ -162,7 +164,7 @@ const MultipleFileUpload = ({
         </p>
         
         <p className="upload-info">
-          รองรับ: PDF, JPG, DOCX, XLSX, MD (สูงสุด {maxFiles} ไฟล์, {maxSizePerFile / 1024 / 1024}MB/ไฟล์)
+          รองรับ: PDF, JPG, DOCX, XLSX, MD, XLS, PNG (สูงสุด {maxFiles} ไฟล์, {maxSizePerFile / 1024 / 1024}MB/ไฟล์)
         </p>
       </div>
 
