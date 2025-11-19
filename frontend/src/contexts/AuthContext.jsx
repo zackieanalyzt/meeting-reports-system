@@ -1,6 +1,8 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
+const API_BASE = "http://192.168.105.202:3001/api";   // <======= แก้ตรงนี้
+
 const AuthContext = createContext(null);
 
 export const useAuth = () => {
@@ -32,7 +34,8 @@ export const AuthProvider = ({ children }) => {
     const verifyToken = async () => {
       if (token) {
         try {
-          const response = await axios.get('http://localhost:3001/api/auth/verify');
+          // const response = await axios.get('http://localhost:3001/api/auth/verify');
+          const response = await axios.get(`${API_BASE}/auth/verify`);
           if (response.data.success) {
             setUser(response.data.user);
           } else {
@@ -51,10 +54,13 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', {
-        username,
-        password
-      });
+      // const response = await axios.post('http://localhost:3001/api/auth/login', {
+      // await axios.post(`${API_BASE}/auth/login`, {
+      const response = await axios.post(`${API_BASE}/auth/login`, {
+    username,
+    password
+});
+
 
       if (response.data.success) {
         const { token, user } = response.data;
@@ -79,7 +85,9 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       if (token) {
-        await axios.post('http://localhost:3001/api/auth/logout');
+        // await axios.post('http://localhost:3001/api/auth/logout');
+        // await axios.post(`${API_BASE}/auth/logout`);
+        await axios.post(`${API_BASE}/auth/logout`);
       }
     } catch (error) {
       console.error('Logout error:', error);
