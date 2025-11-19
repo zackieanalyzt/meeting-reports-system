@@ -16,6 +16,7 @@ const { logView, logDownload } = require('./middleware/audit');
 
 // Import routes
 const authRoutes = require('./routes/auth');
+const managementRoutes = require('./routes/management');
 
 // Middleware
 app.use(cors());
@@ -23,6 +24,9 @@ app.use(express.json());
 
 // Auth routes (public - no authentication required)
 app.use('/api/auth', authRoutes);
+
+// Management routes (secretary only - authentication required)
+app.use('/api/management', managementRoutes);
 
 // Static file serving for uploads
 const UPLOADS_PATH = process.env.UPLOADS_PATH || path.join(__dirname, '../../uploads');

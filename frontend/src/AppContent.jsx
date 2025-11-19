@@ -7,6 +7,7 @@ import AgendaList from './components/AgendaList';
 import AgendaForm from './components/AgendaForm';
 import ReportStatus from './components/ReportStatus';
 import RestrictedFeature from './components/RestrictedFeature';
+import ManagementDashboard from './components/management/ManagementDashboard';
 import { useAuth } from './contexts/AuthContext';
 import { getMeetings, healthCheck } from './services/api';
 
@@ -177,6 +178,15 @@ function AppContent() {
               <span className="tab-icon">📋</span>
               <span>รายงานการประชุม</span>
             </button>
+            {user?.role === 'secretary' && (
+              <button
+                className={`tab-button ${activeTab === 'management' ? 'active' : ''}`}
+                onClick={() => setActiveTab('management')}
+              >
+                <span className="tab-icon">🛠️</span>
+                <span>จัดการระบบ</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -232,6 +242,10 @@ function AppContent() {
               </div>
               <ReportStatus />
             </div>
+          )}
+
+          {activeTab === 'management' && user?.role === 'secretary' && (
+            <ManagementDashboard />
           )}
         </div>
       </main>
