@@ -1,7 +1,12 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
-const API_BASE = "http://192.168.105.202:3001/api";   // <======= แก้ตรงนี้
+// const API_BASE = "http://192.168.105.202:3001/api";   // <======= แก้ตรงนี้
+// แก้ไขเพื่อให้เรียกได้จากทุก Host  edit by zackiehybrid  21 NOV 2025
+const HOST = window.location.hostname;
+const PROTOCOL = window.location.protocol;
+const API_BASE = `${PROTOCOL}//${HOST}:3001/api`;
+//
 
 const AuthContext = createContext(null);
 

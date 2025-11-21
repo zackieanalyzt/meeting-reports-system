@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getManagementAgendas, bulkDeleteAgendas } from '../../services/managementApi';
-import { deleteAgenda } from '../../services/api';
+import { deleteAgenda, getAgendaWithFiles } from '../../services/api';
+import EditAgendaModal from './EditAgendaModal';
 
 function AgendasManager() {
   const [agendas, setAgendas] = useState([]);
@@ -10,6 +11,8 @@ function AgendasManager() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
 
   useEffect(() => {
     loadAgendas();
@@ -34,6 +37,18 @@ function AgendasManager() {
 
   const handleFilter = () => {
     loadAgendas();
+  };
+
+  const handleEdit = async (agenda) => {
+    try {
+      // Load full agenda data with files
+      const response = await getAgendaWithFiles(agenda.id);
+      setEditTarget(response.data);
+      setShowEditModal(true);
+    } catch (error) {
+      console.error('Error loading agenda for edit:', error);
+      alert('เกิดข้อผิดพลาดในการโหลดข้อมูลวาระ');
+    }
   };
 
   const handleDelete = async (id) => {
@@ -196,13 +211,22 @@ function AgendasManager() {
                   <td className="department">{agenda.submitting_department}</td>
                   <td>{formatDate(agenda.meeting_date)}</td>
                   <td>
-                    <button
-                      onClick={() => handleDelete(agenda.id)}
-                      className="btn-icon btn-danger"
-                      title="ลบ"
-                    >
-                      🗑️
-                    </button>
+                    <div className="action-buttons">
+                      <button
+                        onClick={() => handleEdit(agenda)}
+                        className="btn-icon btn-edit"
+                        title="แก้ไข"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => handleDelete(agenda.id)}
+                        className="btn-icon btn-danger"
+                        title="ลบ"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -210,6 +234,21 @@ function AgendasManager() {
           </tbody>
         </table>
       </div>
+
+      {showEditModal && editTarget && (
+        <EditAgendaModal
+          agenda={editTarget}
+          onSuccess={() => {
+            setShowEditModal(false);
+            setEditTarget(null);
+            loadAgendas();
+          }}
+          onCancel={() => {
+            setShowEditModal(false);
+            setEditTarget(null);
+          }}
+        />
+      )}
 
       {showDeleteConfirm && (
         <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
@@ -236,6 +275,8 @@ function AgendasManager() {
           border-radius: 8px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           margin-bottom: 20px;
+          max-width: 100%;
+          width: 100%;
         }
 
         .manager-header {
@@ -299,10 +340,12 @@ function AgendasManager() {
 
         .table-container {
           overflow-x: auto;
+          width: 100%;
         }
 
         table {
           width: 100%;
+          min-width: 1000px;
           border-collapse: collapse;
         }
 
@@ -311,6 +354,16 @@ function AgendasManager() {
           text-align: left;
           border-bottom: 1px solid #e2e8f0;
         }
+
+        /* Column widths */
+        th:nth-child(1), td:nth-child(1) { width: 50px; }
+        th:nth-child(2), td:nth-child(2) { width: 120px; }
+        th:nth-child(3), td:nth-child(3) { width: 80px; }
+        th:nth-child(4), td:nth-child(4) { width: auto; min-width: 250px; }
+        th:nth-child(5), td:nth-child(5) { width: 100px; }
+        th:nth-child(6), td:nth-child(6) { width: 150px; }
+        th:nth-child(7), td:nth-child(7) { width: 120px; }
+        th:nth-child(8), td:nth-child(8) { width: 120px; text-align: center; }
 
         th {
           background: #f8fafc;
@@ -323,10 +376,18 @@ function AgendasManager() {
         }
 
         .agenda-topic {
-          max-width: 300px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          overflow: visible;
+          text-overflow: clip;
+          white-space: normal;
+          word-break: break-word;
+          line-height: 1.4;
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: 5px;
+          justify-content: center;
+          align-items: center;
         }
 
         .department {
@@ -348,10 +409,23 @@ function AgendasManager() {
           cursor: pointer;
           background: transparent;
           font-size: 1.2em;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
         }
 
         .btn-icon:hover {
           background: #f1f5f9;
+          transform: scale(1.1);
+        }
+
+        .btn-icon.btn-edit:hover {
+          background: #dbeafe;
+        }
+
+        .btn-icon.btn-danger:hover {
+          background: #fee2e2;
         }
 
         .modal-overlay {

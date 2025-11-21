@@ -7,8 +7,8 @@ function MeetingForm({ onSuccess, onCancel }) {
     meeting_title: '',
     meeting_date: '',
     meeting_time: '09:30',
-    location: 'ห้องประชุมดอกปีบ สำนักงานสาธารณสุขจังหวัดลำพูน',
-    department: 'สำนักงานสาธารณสุขจังหวัดลำพูน'
+    location: 'ห้องประชุมชั้นสอง อาคารอุบัติเหตุ',
+    department: 'โรงพยาบาลลี้'
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);

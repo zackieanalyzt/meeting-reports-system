@@ -1,10 +1,23 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.105.202:3001/api';
+// Dynamic API URL - works on localhost and LAN (same as api.js)
+const getApiUrl = () => {
+  // Check environment variable first
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Use current hostname with port 3001 (works on any network)
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}:3001/api`;
+};
+
+const API_URL = getApiUrl();
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 30000, // Increased to 30 seconds for LAN and large data
   headers: {
     'Content-Type': 'application/json',
   }

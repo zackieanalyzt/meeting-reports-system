@@ -25,19 +25,21 @@ function AppContent() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Health check
+  // Health check - silent fail to avoid disrupting user experience
   useEffect(() => {
     const checkHealth = async () => {
       try {
         const health = await healthCheck();
         setDbStatus(health);
       } catch (err) {
+        // Silent fail - don't show error popup, just log to console
+        console.warn('Health check failed (silent):', err.message);
         setDbStatus({ status: 'error', database: 'disconnected' });
       }
     };
     
     checkHealth();
-    const interval = setInterval(checkHealth, 30000);
+    const interval = setInterval(checkHealth, 60000); // Check every 60 seconds instead of 30
     
     return () => clearInterval(interval);
   }, []);

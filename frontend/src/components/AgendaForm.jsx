@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
-import { createAgenda, uploadFile, getMeetings } from '../services/api';
+import { createAgenda, getMeetings } from '../services/api';
+import axios from 'axios';
 import MultipleFileUpload from './MultipleFileUpload';
+
+// Get API base URL dynamically (works on localhost and LAN)
+const getApiBase = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace('/api', '');
+  }
+  const protocol = window.location.protocol;
+  const hostname = window.location.hostname;
+  return `${protocol}//${hostname}:3001`;
+};
 
 const DEPARTMENTS = [
   'กลุ่มงานบริหาร',
@@ -88,7 +99,7 @@ function AgendaForm({ onSuccess, onCancel }) {
         throw new Error('กรุณาระบุหมายเลขวาระ');
       }
 
-      // If files provided, use new endpoint with files
+      // If files provided, use endpoint with files
       if (files && files.length > 0) {
         const formDataToSend = new FormData();
         
@@ -102,22 +113,26 @@ function AgendaForm({ onSuccess, onCancel }) {
           formDataToSend.append('files', file);
         });
 
-        //const response = await fetch('http://localhost:3001/api/agendas/with-files', {
-        const response = await fetch(`${API_BASE}/api/agendas/with-files`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: formDataToSend
-        });
+        const API_BASE = getApiBase();
+        const token = localStorage.getItem('token');
 
-        const result = await response.json();
-        
-        if (result.success) {
+        const response = await axios.post(
+          `${API_BASE}/api/agendas/with-files`,
+          formDataToSend,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data'
+            },
+            timeout: 60000 // 60 seconds for file upload
+          }
+        );
+
+        if (response.data.success) {
           alert(`✅ บันทึกวาระพร้อม ${files.length} ไฟล์สำเร็จ`);
           if (onSuccess) onSuccess();
         } else {
-          throw new Error(result.message || 'บันทึกไม่สำเร็จ');
+          throw new Error(response.data.message || 'บันทึกไม่สำเร็จ');
         }
       } else {
         // No files, use regular endpoint
