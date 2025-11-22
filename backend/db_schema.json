@@ -1,0 +1,680 @@
+{
+  "agenda_files": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "nextval('agenda_files_id_seq'::regclass)",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "agenda_id",
+        "data_type": "integer",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "file_name",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 255
+      },
+      {
+        "column_name": "file_path",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 500
+      },
+      {
+        "column_name": "file_size",
+        "data_type": "bigint",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "file_type",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 255
+      },
+      {
+        "column_name": "uploaded_by",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 50
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": "now()",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "is_nullable": "YES",
+        "column_default": "true",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "deleted_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      }
+    ],
+    "primary_keys": [
+      {
+        "column_name": "id"
+      }
+    ],
+    "foreign_keys": [
+      {
+        "column_name": "agenda_id",
+        "foreign_table_name": "meeting_agendas",
+        "foreign_column_name": "id",
+        "constraint_name": "agenda_files_agenda_id_fkey"
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "agenda_files_pkey",
+        "indexdef": "CREATE UNIQUE INDEX agenda_files_pkey ON public.agenda_files USING btree (id)"
+      },
+      {
+        "indexname": "idx_agenda_files_agenda_id",
+        "indexdef": "CREATE INDEX idx_agenda_files_agenda_id ON public.agenda_files USING btree (agenda_id)"
+      },
+      {
+        "indexname": "idx_agenda_files_is_active",
+        "indexdef": "CREATE INDEX idx_agenda_files_is_active ON public.agenda_files USING btree (is_active) WHERE (is_active = true)"
+      }
+    ]
+  },
+  "audit_logs": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "nextval('audit_logs_id_seq'::regclass)",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "username",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 50
+      },
+      {
+        "column_name": "actiontype",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 50
+      },
+      {
+        "column_name": "table_name",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 50
+      },
+      {
+        "column_name": "record_id",
+        "data_type": "integer",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "old_values",
+        "data_type": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "new_values",
+        "data_type": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "reason",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "ip_address",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 45
+      },
+      {
+        "column_name": "action",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 50
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": "now()",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "resource_type",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 100
+      },
+      {
+        "column_name": "resource_id",
+        "data_type": "integer",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "user_id",
+        "data_type": "integer",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "user_agent",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "details",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 255
+      }
+    ],
+    "primary_keys": [
+      {
+        "column_name": "id"
+      }
+    ],
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "indexname": "audit_logs_pkey",
+        "indexdef": "CREATE UNIQUE INDEX audit_logs_pkey ON public.audit_logs USING btree (id)"
+      },
+      {
+        "indexname": "idx_audit_logs_created_at",
+        "indexdef": "CREATE INDEX idx_audit_logs_created_at ON public.audit_logs USING btree (created_at)"
+      },
+      {
+        "indexname": "idx_audit_logs_resource",
+        "indexdef": "CREATE INDEX idx_audit_logs_resource ON public.audit_logs USING btree (resource_type, resource_id)"
+      },
+      {
+        "indexname": "idx_audit_logs_username",
+        "indexdef": "CREATE INDEX idx_audit_logs_username ON public.audit_logs USING btree (username)"
+      }
+    ]
+  },
+  "meeting_agendas": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "nextval('meeting_agendas_id_seq'::regclass)",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "meeting_number",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 50
+      },
+      {
+        "column_name": "agenda_number",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 255
+      },
+      {
+        "column_name": "agenda_topic",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 500
+      },
+      {
+        "column_name": "agenda_type",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 20
+      },
+      {
+        "column_name": "submitting_department",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 200
+      },
+      {
+        "column_name": "description",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "file_path",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 500
+      },
+      {
+        "column_name": "file_size",
+        "data_type": "integer",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "created_by",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 50
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "is_nullable": "YES",
+        "column_default": "true",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "deleted_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "updated_by",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 255
+      }
+    ],
+    "primary_keys": [
+      {
+        "column_name": "id"
+      }
+    ],
+    "foreign_keys": [
+      {
+        "column_name": "meeting_number",
+        "foreign_table_name": "meeting_reports",
+        "foreign_column_name": "meeting_number",
+        "constraint_name": "meeting_agendas_meeting_number_fkey"
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "meeting_agendas_pkey",
+        "indexdef": "CREATE UNIQUE INDEX meeting_agendas_pkey ON public.meeting_agendas USING btree (id)"
+      },
+      {
+        "indexname": "idx_agenda_department",
+        "indexdef": "CREATE INDEX idx_agenda_department ON public.meeting_agendas USING btree (submitting_department)"
+      },
+      {
+        "indexname": "idx_agenda_meeting_number",
+        "indexdef": "CREATE INDEX idx_agenda_meeting_number ON public.meeting_agendas USING btree (meeting_number)"
+      },
+      {
+        "indexname": "idx_agenda_number",
+        "indexdef": "CREATE INDEX idx_agenda_number ON public.meeting_agendas USING btree (agenda_number)"
+      },
+      {
+        "indexname": "idx_agenda_type",
+        "indexdef": "CREATE INDEX idx_agenda_type ON public.meeting_agendas USING btree (agenda_type)"
+      },
+      {
+        "indexname": "idx_meeting_agendas_is_active",
+        "indexdef": "CREATE INDEX idx_meeting_agendas_is_active ON public.meeting_agendas USING btree (is_active) WHERE (is_active = true)"
+      }
+    ]
+  },
+  "meeting_files": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "nextval('meeting_files_id_seq'::regclass)",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "meeting_id",
+        "data_type": "integer",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "file_name",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 255
+      },
+      {
+        "column_name": "file_path",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 500
+      },
+      {
+        "column_name": "file_size",
+        "data_type": "bigint",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "file_type",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 255
+      },
+      {
+        "column_name": "uploaded_by",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 50
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": "now()",
+        "character_maximum_length": null
+      }
+    ],
+    "primary_keys": [
+      {
+        "column_name": "id"
+      }
+    ],
+    "foreign_keys": [
+      {
+        "column_name": "meeting_id",
+        "foreign_table_name": "meeting_reports",
+        "foreign_column_name": "id",
+        "constraint_name": "meeting_files_meeting_id_fkey"
+      }
+    ],
+    "indexes": [
+      {
+        "indexname": "meeting_files_pkey",
+        "indexdef": "CREATE UNIQUE INDEX meeting_files_pkey ON public.meeting_files USING btree (id)"
+      },
+      {
+        "indexname": "idx_meeting_files_meeting_id",
+        "indexdef": "CREATE INDEX idx_meeting_files_meeting_id ON public.meeting_files USING btree (meeting_id)"
+      }
+    ]
+  },
+  "meeting_reports": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "nextval('meeting_reports_id_seq'::regclass)",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "meeting_number",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 50
+      },
+      {
+        "column_name": "meeting_title",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 500
+      },
+      {
+        "column_name": "meeting_date",
+        "data_type": "date",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "meeting_time",
+        "data_type": "time without time zone",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "location",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 300
+      },
+      {
+        "column_name": "department",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 200
+      },
+      {
+        "column_name": "file_path",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 500
+      },
+      {
+        "column_name": "file_size",
+        "data_type": "integer",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "created_by",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 50
+      },
+      {
+        "column_name": "updated_by",
+        "data_type": "integer",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "is_nullable": "YES",
+        "column_default": "true",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "deleted_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null
+      }
+    ],
+    "primary_keys": [
+      {
+        "column_name": "id"
+      }
+    ],
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "indexname": "meeting_reports_pkey",
+        "indexdef": "CREATE UNIQUE INDEX meeting_reports_pkey ON public.meeting_reports USING btree (id)"
+      },
+      {
+        "indexname": "idx_unique_meeting_number",
+        "indexdef": "CREATE UNIQUE INDEX idx_unique_meeting_number ON public.meeting_reports USING btree (meeting_number)"
+      },
+      {
+        "indexname": "idx_meeting_reports_is_active",
+        "indexdef": "CREATE INDEX idx_meeting_reports_is_active ON public.meeting_reports USING btree (is_active) WHERE (is_active = true)"
+      }
+    ]
+  },
+  "users": {
+    "columns": [
+      {
+        "column_name": "id",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "nextval('users_id_seq'::regclass)",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "username",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 50
+      },
+      {
+        "column_name": "role",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 20
+      },
+      {
+        "column_name": "department",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 100
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": "now()",
+        "character_maximum_length": null
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "is_nullable": "YES",
+        "column_default": "true",
+        "character_maximum_length": null
+      }
+    ],
+    "primary_keys": [
+      {
+        "column_name": "id"
+      }
+    ],
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "indexname": "users_pkey",
+        "indexdef": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)"
+      },
+      {
+        "indexname": "users_username_key",
+        "indexdef": "CREATE UNIQUE INDEX users_username_key ON public.users USING btree (username)"
+      },
+      {
+        "indexname": "idx_users_role",
+        "indexdef": "CREATE INDEX idx_users_role ON public.users USING btree (role)"
+      },
+      {
+        "indexname": "idx_users_username",
+        "indexdef": "CREATE INDEX idx_users_username ON public.users USING btree (username)"
+      }
+    ]
+  }
+}
