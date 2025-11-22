@@ -341,11 +341,13 @@ function AgendasManager() {
         .table-container {
           overflow-x: auto;
           width: 100%;
+          margin: 0 -10px;
+          padding: 0 10px;
         }
 
         table {
           width: 100%;
-          min-width: 1000px;
+          min-width: 1200px;
           border-collapse: collapse;
         }
 
@@ -355,15 +357,24 @@ function AgendasManager() {
           border-bottom: 1px solid #e2e8f0;
         }
 
-        /* Column widths */
+        /* Column widths - ปรับให้กว้างขึ้นและไม่ตกขอบ */
         th:nth-child(1), td:nth-child(1) { width: 50px; }
         th:nth-child(2), td:nth-child(2) { width: 120px; }
         th:nth-child(3), td:nth-child(3) { width: 80px; }
-        th:nth-child(4), td:nth-child(4) { width: auto; min-width: 250px; }
+        th:nth-child(4), td:nth-child(4) { 
+          width: auto; 
+          min-width: 300px;
+          max-width: 500px;
+        }
         th:nth-child(5), td:nth-child(5) { width: 100px; }
         th:nth-child(6), td:nth-child(6) { width: 150px; }
         th:nth-child(7), td:nth-child(7) { width: 120px; }
-        th:nth-child(8), td:nth-child(8) { width: 120px; text-align: center; }
+        th:nth-child(8), td:nth-child(8) { 
+          width: 140px;
+          min-width: 140px;
+          text-align: center;
+          padding-right: 20px;
+        }
 
         th {
           background: #f8fafc;
@@ -385,9 +396,10 @@ function AgendasManager() {
 
         .action-buttons {
           display: flex;
-          gap: 5px;
+          gap: 8px;
           justify-content: center;
           align-items: center;
+          padding: 5px;
         }
 
         .department {
@@ -403,7 +415,7 @@ function AgendasManager() {
         }
 
         .btn-icon {
-          padding: 6px 10px;
+          padding: 8px 12px;
           border: none;
           border-radius: 4px;
           cursor: pointer;
@@ -413,6 +425,7 @@ function AgendasManager() {
           align-items: center;
           justify-content: center;
           transition: all 0.2s;
+          min-width: 40px;
         }
 
         .btn-icon:hover {

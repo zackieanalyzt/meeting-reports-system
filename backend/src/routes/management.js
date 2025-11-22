@@ -578,7 +578,7 @@ router.post('/meetings/bulk-delete', async (req, res) => {
   }
 });
 
-// Bulk delete agendas
+// Bulk delete agendas - Soft Delete
 router.post('/agendas/bulk-delete', async (req, res) => {
   try {
     const { ids } = req.body;
@@ -590,16 +590,27 @@ router.post('/agendas/bulk-delete', async (req, res) => {
       });
     }
 
-    // Delete agendas
+    // Soft delete agendas
     const result = await db.query(
-      'DELETE FROM meeting_agendas WHERE id = ANY($1) RETURNING *',
+      `UPDATE meeting_agendas 
+       SET is_active = FALSE, deleted_at = NOW()
+       WHERE id = ANY($1) AND is_active = TRUE
+       RETURNING *`,
+      [ids]
+    );
+
+    // Soft delete related files
+    await db.query(
+      `UPDATE agenda_files 
+       SET is_active = FALSE, deleted_at = NOW()
+       WHERE agenda_id = ANY($1) AND is_active = TRUE`,
       [ids]
     );
 
     // Audit log
     await auditLog(
       req.user.username,
-      'bulk_delete_agendas',
+      'bulk_soft_delete_agendas',
       'meeting_agendas',
       null,
       { count: result.rows.length, ids },

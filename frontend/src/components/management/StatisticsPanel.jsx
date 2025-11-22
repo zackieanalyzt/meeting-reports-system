@@ -107,17 +107,23 @@ function StatisticsPanel({ stats, loading }) {
         .stat-icon {
           font-size: 2em;
           margin-bottom: 10px;
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
         }
 
         .stat-value {
           font-size: 2.5em;
           font-weight: bold;
           margin-bottom: 5px;
+          color: #ffffff;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         .stat-label {
           font-size: 0.9em;
-          opacity: 0.9;
+          opacity: 1;
+          color: #ffffff;
+          font-weight: 500;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.15);
         }
 
         .storage-section {

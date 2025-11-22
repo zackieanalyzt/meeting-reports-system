@@ -551,7 +551,7 @@ app.get('/api/agendas', authenticateToken, logView('agenda'), async (req, res) =
     const { meeting_number, department, type } = req.query;
     let query = 'SELECT * FROM meeting_agendas';
     let params = [];
-    let conditions = [];
+    let conditions = ['is_active = TRUE']; // Filter only active records
 
     if (meeting_number) {
       conditions.push('meeting_number = $' + (params.length + 1));
@@ -568,9 +568,8 @@ app.get('/api/agendas', authenticateToken, logView('agenda'), async (req, res) =
       params.push(type);
     }
 
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
+    // Always add WHERE clause (at least for is_active)
+    query += ' WHERE ' + conditions.join(' AND ');
 
     query += ' ORDER BY meeting_number DESC, agenda_number';
 
@@ -618,8 +617,8 @@ app.get('/api/agendas/:id', authenticateToken, logView('agenda'), async (req, re
   try {
     const { id } = req.params;
     
-    // Get agenda
-    const agendaResult = await db.query('SELECT * FROM meeting_agendas WHERE id = $1', [id]);
+    // Get agenda (only active)
+    const agendaResult = await db.query('SELECT * FROM meeting_agendas WHERE id = $1 AND is_active = TRUE', [id]);
 
     if (agendaResult.rows.length === 0) {
       return res.status(404).json({
@@ -628,9 +627,9 @@ app.get('/api/agendas/:id', authenticateToken, logView('agenda'), async (req, re
       });
     }
 
-    // Get files for this agenda
+    // Get files for this agenda (only active)
     const filesResult = await db.query(
-      'SELECT * FROM agenda_files WHERE agenda_id = $1 ORDER BY created_at',
+      'SELECT * FROM agenda_files WHERE agenda_id = $1 AND is_active = TRUE ORDER BY created_at',
       [id]
     );
 
@@ -657,7 +656,7 @@ app.get('/api/agendas/:id/files', authenticateToken, async (req, res) => {
     const { id } = req.params;
     
     const result = await db.query(
-      'SELECT * FROM agenda_files WHERE agenda_id = $1 ORDER BY created_at',
+      'SELECT * FROM agenda_files WHERE agenda_id = $1 AND is_active = TRUE ORDER BY created_at',
       [id]
     );
 
@@ -762,7 +761,7 @@ app.post('/api/agendas/with-files', authenticateToken, requireSecretaryOrManager
         await db.query(
           `INSERT INTO agenda_files (agenda_id, file_name, file_path, file_size, file_type, uploaded_by)
            VALUES ($1, $2, $3, $4, $5, $6)`,
-          [agendaId, file.originalname, `/uploads/${file.filename}`, file.size, file.mimetype, req.user.username]
+          [agendaId, file.filename, `/uploads/${file.filename}`, file.size, file.mimetype, req.user.username]
         );
       }
     }
@@ -906,14 +905,14 @@ app.put('/api/agendas/:id/with-files', authenticateToken, requireSecretaryOrMana
         await db.query(
           `INSERT INTO agenda_files (agenda_id, file_name, file_path, file_size, file_type, uploaded_by)
            VALUES ($1, $2, $3, $4, $5, $6)`,
-          [id, file.originalname, `/uploads/${file.filename}`, file.size, file.mimetype, req.user.username]
+          [id, file.filename, `/uploads/${file.filename}`, file.size, file.mimetype, req.user.username]
         );
       }
     }
 
-    // Get updated agenda with files
+    // Get updated agenda with files (only active)
     const filesResult = await db.query(
-      'SELECT * FROM agenda_files WHERE agenda_id = $1 ORDER BY created_at',
+      'SELECT * FROM agenda_files WHERE agenda_id = $1 AND is_active = TRUE ORDER BY created_at',
       [id]
     );
 
@@ -943,26 +942,38 @@ app.put('/api/agendas/:id/with-files', authenticateToken, requireSecretaryOrMana
   }
 });
 
-// Delete agenda (secretary or manager only)
+// Delete agenda (secretary or manager only) - Soft Delete
 app.delete('/api/agendas/:id', authenticateToken, requireSecretaryOrManager, async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Soft delete agenda
     const result = await db.query(
-      'DELETE FROM meeting_agendas WHERE id = $1 RETURNING *',
-      [id]
+      `UPDATE meeting_agendas 
+       SET is_active = FALSE, deleted_at = NOW(), updated_by = $2
+       WHERE id = $1 AND is_active = TRUE
+       RETURNING *`,
+      [id, req.user.username]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'Agenda not found'
+        error: 'Agenda not found or already deleted'
       });
     }
 
+    // Soft delete related files
+    await db.query(
+      `UPDATE agenda_files 
+       SET is_active = FALSE, deleted_at = NOW()
+       WHERE agenda_id = $1 AND is_active = TRUE`,
+      [id]
+    );
+
     // Audit log
     const { auditLog } = require('./middleware/audit');
-    await auditLog(req.user.username, 'delete_agenda', 'meeting_agendas', id, { agenda_number: result.rows[0].agenda_number }, req);
+    await auditLog(req.user.username, 'soft_delete_agenda', 'meeting_agendas', id, { agenda_number: result.rows[0].agenda_number }, req);
 
     res.json({
       success: true,
